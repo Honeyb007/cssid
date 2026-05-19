@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | CNSSID</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .nav-active { background: #000; color: #fff; }
+        .section { display: none; }
+        .section.active { display: block; }
+        .status-eligible   { background:#dcfce7; color:#15803d; }
+        .status-pending    { background:#fef9c3; color:#854d0e; }
+        .status-ineligible { background:#fee2e2; color:#991b1b; }
+        .status-suspended  { background:#f3f4f6; color:#374151; }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen flex">
+
+    <!-- ── Sidebar ─────────────────────────────────────────────── -->
+    <aside class="w-64 bg-white border-r border-gray-200 flex flex-col fixed h-full z-30">
+        <div class="p-6">
+            <div class="flex items-center gap-2 mb-10">
+                <div class="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
+                    <span class="text-white font-extrabold text-xs">SS<span class="text-green-400">ID</span></span>
+                </div>
+                <span class="text-lg font-extrabold tracking-tighter">CNSS<span class="text-green-600">ID</span>
+                    <span class="text-xs font-bold text-gray-400 ml-1">ADMIN</span>
+                </span>
+            </div>
+
+            <nav class="space-y-1">
+                <button onclick="showSection('overview')" id="nav-overview"
+                    class="nav-btn nav-active w-full flex items-center gap-3 p-3 rounded-2xl font-bold transition text-left text-sm">
+                    <i class="fa-solid fa-chart-pie w-4"></i> Overview
+                </button>
+                <button onclick="showSection('citizens')" id="nav-citizens"
+                    class="nav-btn w-full flex items-center gap-3 p-3 text-gray-400 hover:bg-gray-100 rounded-2xl font-bold transition text-left text-sm">
+                    <i class="fa-solid fa-users w-4"></i> Citizens
+                </button>
+                <button onclick="showSection('officials')" id="nav-officials"
+                    class="nav-btn w-full flex items-center gap-3 p-3 text-gray-400 hover:bg-gray-100 rounded-2xl font-bold transition text-left text-sm">
+                    <i class="fa-solid fa-user-tie w-4"></i> Officials
+                </button>
+                <button onclick="showSection('logs')" id="nav-logs"
+                    class="nav-btn w-full flex items-center gap-3 p-3 text-gray-400 hover:bg-gray-100 rounded-2xl font-bold transition text-left text-sm">
+                    <i class="fa-solid fa-file-shield w-4"></i> Audit Logs
+                </button>
+            </nav>
+        </div>
+
+        <div class="mt-auto p-6 border-t border-gray-100">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 bg-black rounded-full flex items-center justify-center text-green-400 font-bold text-sm">
+                    A
+                </div>
+                <div>
+                    <p id="sidebar-name" class="text-xs font-bold truncate">Administrator</p>
+                    <p class="text-[10px] text-gray-400">System Administrator</p>
+                </div>
+            </div>
+            <button onclick="logout()"
+                class="w-full py-3 bg-gray-100 rounded-xl text-xs font-bold hover:bg-red-50 hover:text-red-600 transition">
+                <i class="fa-solid fa-right-from-bracket mr-1"></i> Logout
+            </button>
+        </div>
+    </aside>
+
+    <!-- ── Main ───────────────────────────────────────────────── -->
+    <main class="flex-1 ml-64 p-10">
+
+        <!-- ══ SECTION: OVERVIEW ════════════════════════════════ -->
+        <div id="section-overview" class="section active">
+            <header class="mb-10">
+                <h1 class="text-4xl font-extrabold">System Overview</h1>
+                <p class="text-gray-400 mt-2">Centralized National Social Security Identity Management System</p>
+            </header>
+
+            <!-- Stats grid -->
+            <div class="grid grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
+                <div class="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm" style="border-left:4px solid #22c55e">
+                    <p class="text-xs font-bold text-gray-400 uppercase mb-2">Total Citizens</p>
+                    <h2 id="stat-citizens" class="text-4xl font-extrabold">—</h2>
+                    <p class="text-[10px] text-green-500 mt-2 font-bold">Registered SSIDs</p>
+                </div>
+                <div class="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm" style="border-left:4px solid #3b82f6">
+                    <p class="text-xs font-bold text-gray-400 uppercase mb-2">Officials</p>
+                    <h2 id="stat-officials" class="text-4xl font-extrabold">—</h2>
+                    <p class="text-[10px] text-gray-400 mt-2 font-bold">Active agency accounts</p>
+                </div>
+                <div class="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm" style="border-left:4px solid #000">
+                    <p class="text-xs font-bold text-gray-400 uppercase mb-2">Total Verifications</p>
+                    <h2 id="stat-verifications" class="text-4xl font-extrabold">—</h2>
+                    <p class="text-[10px] text-gray-400 mt-2 font-bold">All time queries</p>
+                </div>
+                <div class="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm" style="border-left:4px solid #f59e0b">
+                    <p class="text-xs font-bold text-gray-400 uppercase mb-2">Today's Verifications</p>
+                    <h2 id="stat-today" class="text-4xl font-extrabold">—</h2>
+                    <p class="text-[10px] text-gray-400 mt-2 font-bold">Queries today</p>
+                </div>
+                <div class="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm" style="border-left:4px solid #22c55e">
+                    <p class="text-xs font-bold text-gray-400 uppercase mb-2">Eligible Benefits</p>
+                    <h2 id="stat-eligible" class="text-4xl font-extrabold">—</h2>
+                    <p class="text-[10px] text-gray-400 mt-2 font-bold">Across all programs</p>
+                </div>
+                <div class="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm" style="border-left:4px solid #f97316">
+                    <p class="text-xs font-bold text-gray-400 uppercase mb-2">Pending Benefits</p>
+                    <h2 id="stat-pending" class="text-4xl font-extrabold">—</h2>
+                    <p class="text-[10px] text-gray-400 mt-2 font-bold">Awaiting verification</p>
+                </div>
+            </div>
+
+            <!-- Recent audit log preview -->
+            <div class="bg-white rounded-[2.5rem] border border-gray-100 overflow-hidden">
+                <div class="p-8 border-b border-gray-50 flex justify-between items-center">
+                    <h3 class="font-bold text-lg">Latest System Activity</h3>
+                    <button onclick="showSection('logs')" class="text-xs font-bold text-green-600 hover:underline">
+                        View All Logs
+                    </button>
+                </div>
+                <div id="overview-logs">
+                    <div class="p-8 text-center text-gray-400 text-sm">Loading...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ══ SECTION: CITIZENS ═════════════════════════════════ -->
+        <div id="section-citizens" class="section">
+            <div class="flex justify-between items-center mb-8">
+                <div>
+                    <h1 class="text-4xl font-extrabold">Registered Citizens</h1>
+                    <p class="text-gray-400 mt-2">All citizens with active SSIDs in the system.</p>
+                </div>
+                <div class="relative">
+                    <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-300"></i>
+                    <input id="citizen-search" type="text" placeholder="Search name, SSID, NIN..."
+                        class="pl-10 pr-4 py-3 border border-gray-200 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-green-500"
+                        oninput="searchCitizens()">
+                </div>
+            </div>
+            <div class="bg-white rounded-[2.5rem] border border-gray-100 overflow-hidden">
+                <div id="citizens-table">
+                    <div class="p-8 text-center text-gray-400 text-sm">Loading citizens...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ══ SECTION: OFFICIALS ════════════════════════════════ -->
+        <div id="section-officials" class="section">
+            <div class="flex justify-between items-center mb-8">
+                <div>
+                    <h1 class="text-4xl font-extrabold">Agency Officials</h1>
+                    <p class="text-gray-400 mt-2">Manage government official accounts.</p>
+                </div>
+                <button onclick="openCreateModal()"
+                    class="px-6 py-3 bg-black text-white rounded-2xl font-bold text-sm hover:bg-gray-800 transition flex items-center gap-2">
+                    <i class="fa-solid fa-plus"></i> Create Official
+                </button>
+            </div>
+
+            <!-- Error/success message -->
+            <div id="official-msg" class="hidden mb-6 p-4 rounded-2xl flex items-center gap-3"></div>
+
+            <div class="bg-white rounded-[2.5rem] border border-gray-100 overflow-hidden">
+                <div id="officials-table">
+                    <div class="p-8 text-center text-gray-400 text-sm">Loading officials...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ══ SECTION: AUDIT LOGS ════════════════════════════════ -->
+        <div id="section-logs" class="section">
+            <div class="mb-8">
+                <h1 class="text-4xl font-extrabold">Full Audit Log</h1>
+                <p class="text-gray-400 mt-2">Every verification query across all agencies.</p>
+            </div>
+            <div class="bg-white rounded-[2.5rem] border border-gray-100 overflow-hidden">
+                <div id="logs-table">
+                    <div class="p-8 text-center text-gray-400 text-sm">Loading logs...</div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- ── Create Official Modal ─────────────────────────────── -->
+    <div id="create-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-6">
+        <div class="bg-white rounded-[2rem] p-8 w-full max-w-md">
+            <h3 class="text-xl font-extrabold mb-6">Create Official Account</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="text-xs font-bold text-gray-400 uppercase">Email Address</label>
+                    <input id="new-email" type="email" placeholder="official@gov.ng"
+                        class="w-full mt-2 p-3 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-green-500">
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-gray-400 uppercase">Password</label>
+                    <input id="new-password" type="password" placeholder="Secure password"
+                        class="w-full mt-2 p-3 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-green-500">
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-gray-400 uppercase">Agency</label>
+                    <select id="new-agency" class="w-full mt-2 p-3 border border-gray-200 rounded-xl bg-white font-bold outline-none">
+                        <option value="PenCom">PenCom -Pension Commission</option>
+                        <option value="NSIPA">NSIPA - Social Investment</option>
+                        <option value="NASSCO">NASSCO - Social Safety Nets</option>
+                    </select>
+                </div>
+            </div>
+            <div id="create-error" class="hidden mt-4 p-3 bg-red-50 text-red-600 text-sm font-semibold rounded-xl"></div>
+            <div class="flex gap-3 mt-6">
+                <button onclick="closeCreateModal()"
+                    class="flex-1 py-3 bg-gray-100 rounded-xl font-bold text-sm hover:bg-gray-200 transition">
+                    Cancel
+                </button>
+                <button onclick="createOfficial()"
+                    class="flex-1 py-3 bg-black text-white rounded-xl font-bold text-sm hover:bg-gray-800 transition">
+                    Create Account
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API   = 'http://localhost:5000/api';
+        const token = localStorage.getItem('token');
+        const name  = localStorage.getItem('name');
+
+        // ── Auth guard ───────────────────────────────────────────
+        if (!token || localStorage.getItem('role') !== 'admin') {
+            window.location.href = './login.html';
+        }
+
+        document.getElementById('sidebar-name').innerText = name || 'Administrator';
+
+        // ── Nav switching ────────────────────────────────────────
+        function showSection(name) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => {
+                b.classList.remove('nav-active', 'text-white');
+                b.classList.add('text-gray-400');
+            });
+            document.getElementById(`section-${name}`).classList.add('active');
+            const btn = document.getElementById(`nav-${name}`);
+            btn.classList.add('nav-active', 'text-white');
+            btn.classList.remove('text-gray-400');
+
+            if (name === 'citizens') loadCitizens();
+            if (name === 'officials') loadOfficials();
+            if (name === 'logs') loadLogs();
+        }
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = './login.html';
+        }
+
+        function formatDate(d) {
+            if (!d) return '—';
+            return new Date(d).toLocaleDateString('en-NG', {
+                day: 'numeric', month: 'short', year: 'numeric',
+                hour: '2-digit', minute: '2-digit'
+            });
+        }
+
+        // ── Load overview stats ──────────────────────────────────
+        async function loadStats() {
+            try {
+                const res  = await fetch(`${API}/admin/stats`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                const data = await res.json();
+                const s    = data.stats;
+
+                document.getElementById('stat-citizens').innerText      = s.totalCitizens;
+                document.getElementById('stat-officials').innerText      = s.totalOfficials;
+                document.getElementById('stat-verifications').innerText  = s.totalVerifications;
+                document.getElementById('stat-today').innerText          = s.todayVerifications;
+                document.getElementById('stat-eligible').innerText       = s.eligibleBenefits;
+                document.getElementById('stat-pending').innerText        = s.pendingBenefits;
+            } catch (err) {
+                console.error('Stats error:', err);
+            }
+        }
+
+        // ── Load recent logs for overview ────────────────────────
+        async function loadOverviewLogs() {
+            try {
+                const res  = await fetch(`${API}/admin/logs`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                const data = await res.json();
+                const logs = data.logs.slice(0, 6);
+
+                if (!logs.length) {
+                    document.getElementById('overview-logs').innerHTML =
+                        `<div class="p-8 text-center text-gray-400 text-sm">No activity yet.</div>`;
+                    return;
+                }
+
+                document.getElementById('overview-logs').innerHTML = `
+                    <table class="w-full text-left">
+                        <thead class="bg-gray-50 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                            <tr>
+                                <th class="p-4">SSID Queried</th>
+                                <th class="p-4">Agency</th>
+                                <th class="p-4">Purpose</th>
+                                <th class="p-4">Result</th>
+                                <th class="p-4">Time</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-sm divide-y divide-gray-50">
+                            ${logs.map(l => `
+                            <tr class="hover:bg-gray-50 transition">
+                                <td class="p-4 font-mono text-xs">${l.ssid_queried}</td>
+                                <td class="p-4 text-xs font-bold">${l.agency}</td>
+                                <td class="p-4 text-xs text-gray-400 capitalize">${l.purpose.replace(/_/g,' ')}</td>
+                                <td class="p-4">
+                                    <span class="px-2 py-1 rounded-full text-[10px] font-bold
+                                        ${l.result === 'found' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">
+                                        ${l.result.toUpperCase()}
+                                    </span>
+                                </td>
+                                <td class="p-4 text-xs text-gray-400">${formatDate(l.created_at)}</td>
+                            </tr>`).join('')}
+                        </tbody>
+                    </table>`;
+            } catch (err) {
+                console.error('Overview logs error:', err);
+            }
+        }
+
+        // ── Load citizens ────────────────────────────────────────
+        let searchTimeout;
+        function searchCitizens() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(loadCitizens, 400);
+        }
+
+        async function loadCitizens() {
+            const search = document.getElementById('citizen-search')?.value || '';
+            try {
+                const res  = await fetch(`${API}/admin/citizens?search=${encodeURIComponent(search)}&limit=50`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                const data = await res.json();
+
+                if (!data.citizens.length) {
+                    document.getElementById('citizens-table').innerHTML =
+                        `<div class="p-8 text-center text-gray-400 text-sm">No citizens found.</div>`;
+                    return;
+                }
+
+                document.getElementById('citizens-table').innerHTML = `
+                    <table class="w-full text-left">
+                        <thead class="bg-gray-50 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                            <tr>
+                                <th class="p-4">Citizen</th>
+                                <th class="p-4">SSID</th>
+                                <th class="p-4">NIN</th>
+                                <th class="p-4">State</th>
+                                <th class="p-4">Employment</th>
+                                <th class="p-4">NIN Status</th>
+                                <th class="p-4">Registered</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-sm divide-y divide-gray-50">
+                            ${data.citizens.map(c => `
+                            <tr class="hover:bg-gray-50 transition">
+                                <td class="p-4 font-bold">${c.first_name} ${c.last_name}</td>
+                                <td class="p-4 font-mono text-xs text-green-600">${c.ssid}</td>
+                                <td class="p-4 font-mono text-xs">${c.nin.substring(0,4)}****${c.nin.slice(-3)}</td>
+                                <td class="p-4 text-xs">${c.state_of_origin}</td>
+                                <td class="p-4 text-xs capitalize">${c.employment_type}</td>
+                                <td class="p-4">
+                                    <span class="px-2 py-1 rounded-full text-[10px] font-bold
+                                        ${c.nin_verified ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}">
+                                        ${c.nin_verified ? '✓ Verified' : 'Pending'}
+                                    </span>
+                                </td>
+                                <td class="p-4 text-xs text-gray-400">${formatDate(c.created_at)}</td>
+                            </tr>`).join('')}
+                        </tbody>
+                    </table>
+                    <div class="p-4 border-t border-gray-50 text-xs text-gray-400 text-right font-bold">
+                        ${data.pagination.total} total citizens
+                    </div>`;
+            } catch (err) {
+                console.error('Citizens load error:', err);
+            }
+        }
+
+        // ── Load officials ───────────────────────────────────────
+        async function loadOfficials() {
+            try {
+                const res  = await fetch(`${API}/admin/officials`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                const data = await res.json();
+                const officials = data.officials || [];
+
+                if (!officials.length) {
+                    document.getElementById('officials-table').innerHTML =
+                        `<div class="p-8 text-center text-gray-400 text-sm">No officials have been created yet. Create one above.</div>`;
+                    return;
+                }
+
+                document.getElementById('officials-table').innerHTML = `
+                    <table class="w-full text-left">
+                        <thead class="bg-gray-50 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                            <tr>
+                                <th class="p-4">Email</th>
+                                <th class="p-4">Agency</th>
+                                <th class="p-4">Status</th>
+                                <th class="p-4">Created</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-sm divide-y divide-gray-50">
+                            ${officials.map(o => `
+                            <tr class="hover:bg-gray-50 transition">
+                                <td class="p-4 font-bold">${o.email}</td>
+                                <td class="p-4">
+                                    <span class="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-bold">
+                                        ${o.agency}
+                                    </span>
+                                </td>
+                                <td class="p-4 text-xs font-bold ${o.is_active ? 'text-green-600' : 'text-red-600'}">
+                                    ${o.is_active ? 'Active' : 'Inactive'}
+                                </td>
+                                <td class="p-4 text-xs text-gray-400">${formatDate(o.created_at)}</td>
+                            </tr>`).join('')}
+                        </tbody>
+                    </table>`;
+            } catch (err) {
+                console.error('Officials load error:', err);
+            }
+        }
+
+        // ── Load full audit logs ─────────────────────────────────
+        async function loadLogs() {
+            try {
+                const res  = await fetch(`${API}/admin/logs?limit=100`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                const data = await res.json();
+                const logs = data.logs;
+
+                if (!logs.length) {
+                    document.getElementById('logs-table').innerHTML =
+                        `<div class="p-8 text-center text-gray-400 text-sm">No logs yet.</div>`;
+                    return;
+                }
+
+                document.getElementById('logs-table').innerHTML = `
+                    <table class="w-full text-left">
+                        <thead class="bg-gray-50 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                            <tr>
+                                <th class="p-4">SSID Queried</th>
+                                <th class="p-4">Queried By</th>
+                                <th class="p-4">Agency</th>
+                                <th class="p-4">Purpose</th>
+                                <th class="p-4">IP Address</th>
+                                <th class="p-4">Result</th>
+                                <th class="p-4">Timestamp</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-sm divide-y divide-gray-50">
+                            ${logs.map(l => `
+                            <tr class="hover:bg-gray-50 transition">
+                                <td class="p-4 font-mono text-xs text-green-600">${l.ssid_queried}</td>
+                                <td class="p-4 text-xs">${l.queried_by}</td>
+                                <td class="p-4">
+                                    <span class="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-[10px] font-bold">
+                                        ${l.agency}
+                                    </span>
+                                </td>
+                                <td class="p-4 text-xs text-gray-400 capitalize">${l.purpose.replace(/_/g,' ')}</td>
+                                <td class="p-4 font-mono text-xs text-gray-400">${l.ip_address || '—'}</td>
+                                <td class="p-4">
+                                    <span class="px-2 py-1 rounded-full text-[10px] font-bold
+                                        ${l.result === 'found' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">
+                                        ${l.result.toUpperCase()}
+                                    </span>
+                                </td>
+                                <td class="p-4 text-xs text-gray-400">${formatDate(l.created_at)}</td>
+                            </tr>`).join('')}
+                        </tbody>
+                    </table>
+                    <div class="p-4 border-t border-gray-50 text-xs text-gray-400 text-right font-bold">
+                        ${data.pagination.total} total log entries
+                    </div>`;
+            } catch (err) {
+                console.error('Logs error:', err);
+            }
+        }
+
+        // ── Create official modal ────────────────────────────────
+        function openCreateModal() {
+            document.getElementById('create-modal').classList.remove('hidden');
+            document.getElementById('create-error').classList.add('hidden');
+            document.getElementById('new-email').value    = '';
+            document.getElementById('new-password').value = '';
+        }
+
+        function closeCreateModal() {
+            document.getElementById('create-modal').classList.add('hidden');
+        }
+
+        async function createOfficial() {
+            const email    = document.getElementById('new-email').value.trim();
+            const password = document.getElementById('new-password').value;
+            const agency   = document.getElementById('new-agency').value;
+
+            if (!email || !password) {
+                document.getElementById('create-error').innerText = 'Email and password are required.';
+                document.getElementById('create-error').classList.remove('hidden');
+                return;
+            }
+
+            try {
+                const res  = await fetch(`${API}/admin/officials`, {
+                    method: 'POST',
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email, password, agency }),
+                });
+                const data = await res.json();
+
+                if (!res.ok) {
+                    document.getElementById('create-error').innerText = data.message;
+                    document.getElementById('create-error').classList.remove('hidden');
+                    return;
+                }
+
+                closeCreateModal();
+                loadOfficials();
+
+                // Show success toast
+                const msg = document.getElementById('official-msg');
+                msg.className = 'mb-6 p-4 rounded-2xl flex items-center gap-3 bg-green-50 text-green-700';
+                msg.innerHTML = `<i class="fa-solid fa-circle-check"></i> <span class="font-semibold">${data.message}</span>`;
+                msg.classList.remove('hidden');
+                setTimeout(() => msg.classList.add('hidden'), 4000);
+
+            } catch (err) {
+                document.getElementById('create-error').innerText = 'Server error. Try again.';
+                document.getElementById('create-error').classList.remove('hidden');
+            }
+        }
+
+        // ── Init ─────────────────────────────────────────────────
+        loadStats();
+        loadOverviewLogs();
+    </script>
+</body>
+</html>

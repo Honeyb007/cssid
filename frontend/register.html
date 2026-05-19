@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enrollment | CNSSID</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .step-active { color: #22c55e; border-bottom: 2px solid #22c55e; }
+        .upload-box { transition: all 0.2s; }
+        .upload-box:hover { border-color: #22c55e; }
+        .preview-img { width: 80px; height: 80px; object-fit: cover; border-radius: 12px; }
+    </style>
+</head>
+<body class="bg-gray-50 text-black">
+
+    <nav class="p-6 bg-white border-b border-gray-100 flex justify-between items-center">
+        <a href="index.html" class="text-xl font-extrabold tracking-tighter">CNSS<span class="text-green-600">ID</span></a>
+        <a href="login.html" class="text-sm font-bold text-gray-400 hover:text-black">Already enrolled? Sign In</a>
+    </nav>
+
+    <main class="max-w-2xl mx-auto mt-8 p-8 bg-white rounded-3xl shadow-sm border border-gray-100 mb-8">
+        
+        <!-- Step indicators -->
+        <div class="flex justify-between mb-10 text-xs font-bold uppercase tracking-widest text-gray-400">
+            <div id="ind-1" class="step-active pb-2">01. NIN Verify</div>
+            <div id="ind-2" class="pb-2">02. Bio-Data</div>
+            <div id="ind-3" class="pb-2">03. Biometrics</div>
+            <div id="ind-4" class="pb-2">04. Complete</div>
+        </div>
+
+        <!-- Error box -->
+        <div id="error-box" class="hidden mb-6 p-4 bg-red-50 border border-red-200 rounded-2xl flex items-center gap-3">
+            <i class="fa-solid fa-circle-exclamation text-red-500"></i>
+            <p id="error-msg" class="text-sm font-semibold text-red-600"></p>
+        </div>
+
+        <!-- ── STEP 1: NIN Verification ── -->
+        <div id="step1" class="space-y-6">
+            <div>
+                <h2 class="text-3xl font-extrabold">Begin Enrollment</h2>
+                <p class="text-gray-500 mt-1">Provide your 11-digit NIN and date of birth to verify your identity.</p>
+            </div>
+
+            <div class="space-y-4">
+                <div class="space-y-2">
+                    <label class="block text-sm font-bold">National Identification Number (NIN)</label>
+                    <input id="nin" type="text" maxlength="11" placeholder="12345678901"
+                        class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none text-xl tracking-widest font-mono">
+                </div>
+
+                <div class="space-y-2">
+                    <label class="block text-sm font-bold">Date of Birth</label>
+                    <input id="dob" type="date"
+                        class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none">
+                </div>
+
+                <div class="p-4 bg-green-50 rounded-xl flex gap-4 items-start">
+                    <i class="fa-solid fa-circle-info text-green-600 mt-0.5"></i>
+                    <p class="text-xs text-green-800 font-medium">Your data will be verified via the NIMC NINAuth secure gateway. Consent is implied by proceeding.</p>
+                </div>
+            </div>
+
+            <button id="verify-btn" type="button"
+                class="w-full py-4 bg-black text-white rounded-xl font-bold flex items-center justify-center gap-3 hover:bg-gray-800 transition">
+                <span id="verify-text">Verify & Continue</span>
+                <i id="verify-icon" class="fa-solid fa-arrow-right"></i>
+            </button>
+        </div>
+
+        <!-- ── STEP 2: Bio-Data ── -->
+        <div id="step2" class="hidden space-y-5">
+            <div>
+                <h2 class="text-3xl font-extrabold">Personal Profile</h2>
+                <p class="text-gray-500 mt-1">Complete your registration details.</p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div class="space-y-2">
+                    <label class="text-xs font-bold text-gray-500 uppercase">First Name</label>
+                    <input id="first_name" type="text"
+                        class="w-full p-3 bg-white border border-gray-200 rounded-lg font-semibold" >
+                </div>
+                <div class="space-y-2">
+                    <label class="text-xs font-bold text-gray-500 uppercase">Last Name</label>
+                    <input id="last_name" type="text"
+                        class="w-full p-3 bg-white border border-gray-200 rounded-lg font-semibold" >
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div class="space-y-2">
+                    <label class="text-xs font-bold text-gray-500 uppercase">Gender</label>
+                    <select id="gender" class="w-full p-3 border border-gray-200 rounded-lg bg-white">
+                        <option value="">Select gender</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="space-y-2">
+                    <label class="text-xs font-bold text-gray-500 uppercase">Phone Number</label>
+                    <input id="phone" type="tel" placeholder="08012345678"
+                        class="w-full p-3 border border-gray-200 rounded-lg">
+                </div>
+            </div>
+
+            <div class="space-y-2">
+                <label class="text-xs font-bold text-gray-500 uppercase">Email Address</label>
+                <input id="email" type="email" placeholder="email@example.com"
+                    class="w-full p-3 border border-gray-200 rounded-lg">
+            </div>
+
+            <div class="space-y-2">
+                <label class="text-xs font-bold text-gray-500 uppercase">Password</label>
+                <input id="password" type="password" placeholder="Create a secure password"
+                    class="w-full p-3 border border-gray-200 rounded-lg">
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div class="space-y-2">
+                    <label class="text-xs font-bold text-gray-500 uppercase">State of Origin</label>
+                    <input id="state_of_origin" type="text" placeholder="e.g. Nasarawa"
+                        class="w-full p-3 border border-gray-200 rounded-lg">
+                </div>
+                <div class="space-y-2">
+                    <label class="text-xs font-bold text-gray-500 uppercase">LGA</label>
+                    <input id="lga" type="text" placeholder="e.g. Lafia"
+                        class="w-full p-3 border border-gray-200 rounded-lg">
+                </div>
+            </div>
+
+            <div class="space-y-2">
+                <label class="text-xs font-bold text-gray-500 uppercase">Employment Type</label>
+                <select id="employment_type" class="w-full p-3 border border-gray-200 rounded-lg bg-white">
+                    <option value="formal">Formal (Government/Private Sector)</option>
+                    <option value="informal">Informal (Self-employed/Trade)</option>
+                    <option value="student">Student</option>
+                    <option value="unemployed">Unemployed</option>
+                    <option value="retired">Retired</option>
+                </select>
+            </div>
+
+            <button id="bio-next-btn" type="button"
+                class="w-full py-4 bg-black text-white rounded-xl font-bold hover:bg-gray-800 transition">
+                Confirm Details & Continue
+            </button>
+        </div>
+
+        <!-- ── STEP 3: Biometrics ── -->
+        <div id="step3" class="hidden space-y-6">
+            <div class="text-center">
+                <h2 class="text-3xl font-extrabold">Biometric Capture</h2>
+                <p class="text-gray-500 mt-1">Upload your fingerprint image and passport photograph.</p>
+            </div>
+
+            <!-- Fingerprint upload -->
+            <div class="space-y-2">
+                <label class="text-xs font-bold text-gray-500 uppercase">Fingerprint Image (Right Thumb)</label>
+                <div class="upload-box border-2 border-dashed border-gray-200 rounded-2xl p-6 text-center cursor-pointer"
+                    onclick="document.getElementById('fingerprint').click()">
+                    <input type="file" id="fingerprint" class="hidden" accept="image/jpeg,image/png" onchange="previewImage(this, 'fp-preview')">
+                    <div id="fp-preview-container">
+                        <i class="fa-solid fa-fingerprint text-4xl text-gray-300"></i>
+                        <p class="mt-2 text-sm font-bold text-gray-400">Click to upload fingerprint (JPG/PNG)</p>
+                    </div>
+                    <img id="fp-preview" class="preview-img hidden mx-auto mt-2">
+                </div>
+            </div>
+
+            <!-- Passport upload -->
+            <div class="space-y-2">
+                <label class="text-xs font-bold text-gray-500 uppercase">Passport Photograph</label>
+                <div class="upload-box border-2 border-dashed border-gray-200 rounded-2xl p-6 text-center cursor-pointer"
+                    onclick="document.getElementById('passport').click()">
+                    <input type="file" id="passport" class="hidden" accept="image/jpeg,image/png" onchange="previewImage(this, 'pp-preview')">
+                    <div id="pp-preview-container">
+                        <i class="fa-solid fa-camera text-4xl text-gray-300"></i>
+                        <p class="mt-2 text-sm font-bold text-gray-400">Click to upload passport photo (JPG/PNG)</p>
+                    </div>
+                    <img id="pp-preview" class="preview-img hidden mx-auto mt-2">
+                </div>
+            </div>
+
+            <button id="submit-btn" type="button" class="w-full py-4 bg-green-500 text-white rounded-xl font-bold shadow-lg shadow-green-200 hover:bg-green-600 transition flex items-center justify-center gap-3">
+                <span id="submit-text">Generate My SSID</span>
+                <i id="submit-icon" class="fa-solid fa-fingerprint"></i>
+            </button>
+        </div>
+
+        <!-- ── STEP 4: Success ── -->
+        <div id="step4" class="hidden text-center space-y-6 py-6">
+            <div class="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto">
+                <i class="fa-solid fa-circle-check text-4xl"></i>
+            </div>
+            <div>
+                <h2 class="text-3xl font-extrabold">Enrollment Complete!</h2>
+                <p class="text-gray-500 mt-2">Your Social Security ID has been generated.</p>
+            </div>
+            <div class="bg-black text-white rounded-2xl p-6 mx-auto max-w-xs">
+                <p class="text-xs opacity-50 uppercase tracking-widest mb-2">Your SSID</p>
+                <p id="ssid-display" class="text-2xl font-mono font-bold tracking-widest text-green-400"></p>
+                <p id="name-display" class="text-sm mt-3 opacity-70"></p>
+            </div>
+            <p class="text-sm text-gray-400">Keep your SSID safe. You will use it to access all social security services.</p>
+            <a href="login.html"
+                class="inline-block w-full py-4 bg-black text-white rounded-xl font-bold hover:bg-gray-800 transition">
+                Proceed to Login
+            </a>
+        </div>
+
+    </main>
+
+    <script>
+        const API = 'http://localhost:5000/api';
+
+        // Store NIN verification result
+        let ninData = {};
+
+        // ── Error handling ───────────────────────────────────────
+        function showError(msg) {
+            const box = document.getElementById('error-box');
+            document.getElementById('error-msg').innerText = msg;
+            box.classList.remove('hidden');
+            box.scrollIntoView({ behavior: 'smooth' });
+        }
+        function hideError() {
+            document.getElementById('error-box').classList.add('hidden');
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('verify-btn').addEventListener('click', verifyNIN);
+            document.getElementById('bio-next-btn').addEventListener('click', goToStep3);
+            document.getElementById('submit-btn').addEventListener('click', submitRegistration);
+
+            const savedStep = localStorage.getItem('register-step');
+            const savedSuccess = localStorage.getItem('register-success');
+            if (savedStep === '4' && savedSuccess) {
+                const data = JSON.parse(savedSuccess);
+                document.getElementById('ssid-display').innerText = data.ssid;
+                document.getElementById('name-display').innerText = data.name;
+                setStep(4);
+            }
+        });
+
+        // ── Step indicator update ────────────────────────────────
+        function setStep(step) {
+            localStorage.setItem('register-step', step);
+            [1,2,3,4].forEach(i => {
+                document.getElementById(`step${i}`).classList.add('hidden');
+                document.getElementById(`ind-${i}`).classList.remove('step-active');
+            });
+            document.getElementById(`step${step}`).classList.remove('hidden');
+            document.getElementById(`ind-${step}`).classList.add('step-active');
+            hideError();
+        }
+
+        // ── Image preview ────────────────────────────────────────
+        function previewImage(input, previewId) {
+            const preview = document.getElementById(previewId);
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    preview.src = e.target.result;
+                    preview.classList.remove('hidden');
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        // ── STEP 1: Verify NIN ───────────────────────────────────
+        async function verifyNIN(event) {
+            event?.preventDefault();
+            hideError();
+            const nin = document.getElementById('nin').value.trim();
+            const dob = document.getElementById('dob').value;
+
+            if (!nin || nin.length !== 11 || !/^\d+$/.test(nin)) {
+                showError('NIN must be exactly 11 digits.');
+                return;
+            }
+            if (!dob) {
+                showError('Please enter your date of birth.');
+                return;
+            }
+
+            // Set loading
+            document.getElementById('verify-text').innerText = 'Verifying with NIMC...';
+            document.getElementById('verify-icon').className = 'fa-solid fa-spinner fa-spin';
+            document.getElementById('verify-btn').disabled = true;
+
+            try {
+                // We verify by attempting a lightweight check
+                // The full verification happens on final submission
+                // For now, just validate format and proceed
+                await new Promise(r => setTimeout(r, 800)); // Simulate NINAuth delay
+
+                // Store for later submission
+                ninData = { nin, dob };
+
+                // Proceed to step 2
+                setStep(2);
+
+            } catch (err) {
+                showError('Could not connect to verification service.');
+            } finally {
+                document.getElementById('verify-text').innerText = 'Verify & Continue';
+                document.getElementById('verify-icon').className = 'fa-solid fa-arrow-right';
+                document.getElementById('verify-btn').disabled = false;
+            }
+        }
+
+        // ── STEP 2: Validate bio-data and go to step 3 ──────────
+        function goToStep3(event) {
+            event?.preventDefault();
+            hideError();
+            const required = ['first_name', 'last_name', 'gender', 'phone', 'email', 'password', 'state_of_origin', 'lga'];
+            for (const field of required) {
+                if (!document.getElementById(field).value.trim()) {
+                    showError(`Please fill in all required fields.`);
+                    return;
+                }
+            }
+            setStep(3);
+        }
+
+        // ── STEP 3: Final submission ─────────────────────────────
+        async function submitRegistration(event) {
+            event?.preventDefault();
+            hideError();
+
+            const fingerprintFile = document.getElementById('fingerprint').files[0];
+            const passportFile    = document.getElementById('passport').files[0];
+
+            if (!fingerprintFile) {
+                showError('Please upload your fingerprint image.');
+                return;
+            }
+            if (!passportFile) {
+                showError('Please upload your passport photograph.');
+                return;
+            }
+
+            // Set loading
+            document.getElementById('submit-text').innerText = 'Generating SSID...';
+            document.getElementById('submit-icon').className = 'fa-solid fa-spinner fa-spin';
+            document.getElementById('submit-btn').disabled = true;
+
+            try {
+                const formData = new FormData();
+                formData.append('nin',             ninData.nin);
+                formData.append('dob',             ninData.dob);
+                formData.append('first_name',      document.getElementById('first_name').value);
+                formData.append('last_name',       document.getElementById('last_name').value);
+                formData.append('gender',          document.getElementById('gender').value);
+                formData.append('phone',           document.getElementById('phone').value);
+                formData.append('email',           document.getElementById('email').value);
+                formData.append('password',        document.getElementById('password').value);
+                formData.append('state_of_origin', document.getElementById('state_of_origin').value);
+                formData.append('lga',             document.getElementById('lga').value);
+                formData.append('employment_type', document.getElementById('employment_type').value);
+                formData.append('fingerprint',     fingerprintFile);
+                formData.append('passport',        passportFile);
+
+                const response = await fetch(`${API}/auth/register`, {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    showError(data.message || 'Registration failed. Please try again.');
+                    document.getElementById('submit-text').innerText = 'Generate My SSID';
+                    document.getElementById('submit-icon').className = 'fa-solid fa-fingerprint';
+                    document.getElementById('submit-btn').disabled = false;
+                    return;
+                }
+
+                // Show success screen
+                localStorage.setItem('register-success', JSON.stringify({ ssid: data.ssid, name: data.name }));
+                setStep(4);
+                document.getElementById('ssid-display').innerText = data.ssid;
+                document.getElementById('name-display').innerText = data.name;
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                return; // Stop execution here
+            } catch (err) {
+                showError('Could not connect to server. Make sure the backend is running.');
+            } 
+        }
+    </script>
+</body>
+</html>

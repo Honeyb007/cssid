@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Citizen Dashboard | CNSSID</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .ssid-card {
+            background: #000;
+            border-left: 8px solid #22c55e;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+        .status-eligible   { background:#dcfce7; color:#15803d; }
+        .status-pending    { background:#fef9c3; color:#854d0e; }
+        .status-ineligible { background:#fee2e2; color:#991b1b; }
+        .status-suspended  { background:#f3f4f6; color:#374151; }
+        .nav-active { background:#f0fdf4; color:#15803d; }
+        .section { display: none; }
+        .section.active { display: block; }
+        .pulse { animation: pulse-green 2s infinite; }
+        @keyframes pulse-green {
+            0%   { box-shadow: 0 0 0 0 rgba(34,197,94,0.7); }
+            70%  { box-shadow: 0 0 0 8px rgba(34,197,94,0); }
+            100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); }
+        }
+        @media print {
+            aside, header, .no-print { display: none !important; }
+            .print-only { display: block !important; }
+            body { background: white; }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen">
+
+    <!-- ── Sidebar ─────────────────────────────────────────────── -->
+    <aside class="fixed left-0 top-0 h-screen w-64 bg-white border-r border-gray-100 p-6 hidden lg:flex flex-col z-30">
+        <div class="flex items-center gap-2 mb-10">
+            <span class="text-xl font-extrabold tracking-tighter">CNSS<span class="text-green-600">ID</span></span>
+        </div>
+        <nav class="space-y-1 flex-1">
+            <button onclick="showSection('overview')" id="nav-overview"
+                class="nav-btn nav-active w-full flex items-center gap-3 p-3 rounded-xl font-bold transition text-left">
+                <i class="fa-solid fa-house-chimney w-4"></i> Overview
+            </button>
+            <button onclick="showSection('benefits')" id="nav-benefits"
+                class="nav-btn w-full flex items-center gap-3 p-3 text-gray-400 hover:bg-gray-50 rounded-xl font-bold transition text-left">
+                <i class="fa-solid fa-wallet w-4"></i> My Benefits
+            </button>
+            <button onclick="showSection('activity')" id="nav-activity"
+                class="nav-btn w-full flex items-center gap-3 p-3 text-gray-400 hover:bg-gray-50 rounded-xl font-bold transition text-left">
+                <i class="fa-solid fa-clock-rotate-left w-4"></i> Activity Log
+            </button>
+            <button onclick="showSection('consent')" id="nav-consent"
+                class="nav-btn w-full flex items-center gap-3 p-3 text-gray-400 hover:bg-gray-50 rounded-xl font-bold transition text-left">
+                <i class="fa-solid fa-shield-halved w-4"></i> Consent
+            </button>
+            <button onclick="showSection('profile')" id="nav-profile"
+                class="nav-btn w-full flex items-center gap-3 p-3 text-gray-400 hover:bg-gray-50 rounded-xl font-bold transition text-left">
+                <i class="fa-solid fa-user w-4"></i> My Profile
+            </button>
+        </nav>
+        <div class="mt-4 space-y-3">
+            <div class="p-4 bg-gray-900 rounded-2xl text-white">
+                <p class="text-[10px] opacity-50 uppercase font-bold">Help Desk</p>
+                <p class="text-xs mt-1 opacity-70">Contact NIMC Support</p>
+                <a href="mailto:support@nimc.gov.ng"
+                    class="block w-full mt-3 py-2 bg-green-500 rounded-lg text-[10px] font-bold text-center text-white hover:bg-green-600 transition">
+                    GET HELP
+                </a>
+            </div>
+            <button onclick="logout()"
+                class="w-full py-3 bg-gray-100 rounded-xl text-sm font-bold hover:bg-red-50 hover:text-red-600 transition">
+                <i class="fa-solid fa-right-from-bracket mr-2"></i> Logout
+            </button>
+        </div>
+    </aside>
+
+    <!-- ── Main ───────────────────────────────────────────────── -->
+    <main class="lg:ml-64 p-6 md:p-10">
+
+        <!-- Header -->
+        <header class="flex justify-between items-center mb-10 no-print">
+            <div>
+                <h1 id="welcome-msg" class="text-3xl font-extrabold">Welcome back!</h1>
+                <p class="text-gray-400 text-sm mt-1">Your social security profile is active.</p>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="text-right hidden sm:block">
+                    <p class="text-xs font-bold uppercase tracking-widest text-gray-400">Security Status</p>
+                    <p class="text-xs text-green-500 font-bold flex items-center gap-1 justify-end">
+                        <span class="w-2 h-2 bg-green-500 rounded-full pulse inline-block"></span> NIN-Verified
+                    </p>
+                </div>
+                <div id="avatar-container" class="w-12 h-12 bg-gray-900 rounded-full border-2 border-white shadow-sm overflow-hidden flex items-center justify-center text-white font-bold text-sm">
+                    ?
+                </div>
+            </div>
+        </header>
+
+        <!-- Loading spinner -->
+        <div id="loading" class="flex items-center justify-center py-20">
+            <div class="text-center space-y-4">
+                <i class="fa-solid fa-spinner fa-spin text-4xl text-green-500"></i>
+                <p class="text-gray-400 font-bold">Loading your profile...</p>
+            </div>
+        </div>
+
+        <!-- ══ SECTION: OVERVIEW ══════════════════════════════════ -->
+        <div id="section-overview" class="section">
+            <div class="grid lg:grid-cols-3 gap-8">
+                <div class="lg:col-span-2 space-y-8">
+
+                    <!-- SSID Card -->
+                    <div class="ssid-card w-full max-w-md rounded-[2rem] p-8 text-white relative overflow-hidden">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-[10px] font-bold opacity-40 tracking-[0.2em]">FEDERAL REPUBLIC OF NIGERIA</p>
+                                <p class="text-sm font-extrabold tracking-wider">SOCIAL SECURITY IDENTITY</p>
+                            </div>
+                            <i class="fa-solid fa-fingerprint text-green-500 text-2xl"></i>
+                        </div>
+                        <div class="mt-8">
+                            <p id="card-ssid" class="text-2xl font-mono tracking-[0.2em]">— — —</p>
+                            <p class="text-[10px] mt-4 opacity-50 uppercase font-bold">ID Holder</p>
+                            <p id="card-name" class="font-bold tracking-widest uppercase text-sm">—</p>
+                        </div>
+                        <div class="absolute right-8 bottom-8">
+                            <div class="px-3 py-1 bg-green-500/20 border border-green-500 rounded-full text-[10px] font-bold text-green-400">
+                                ACTIVE SSID
+                            </div>
+                        </div>
+                        <div class="absolute -right-8 -bottom-8 w-32 h-32 bg-green-500/5 rounded-full"></div>
+                    </div>
+
+                    <!-- Quick benefit summary -->
+                    <div id="benefit-summary" class="grid sm:grid-cols-2 gap-4">
+                        <!-- Filled by JS -->
+                    </div>
+                </div>
+
+                <!-- Right column -->
+                <div class="space-y-6">
+                    <!-- Quick actions -->
+                    <div class="p-8 bg-black rounded-[2.5rem] text-white">
+                        <h3 class="text-lg font-bold mb-6">Quick Actions</h3>
+                        <ul class="space-y-4">
+                            <li>
+                                <button onclick="printID()"
+                                    class="w-full flex items-center justify-between text-sm hover:text-green-400 transition">
+                                    <span class="opacity-60">Print Digital ID</span>
+                                    <i class="fa-solid fa-print"></i>
+                                </button>
+                            </li>
+                            <li>
+                                <button onclick="showSection('consent')"
+                                    class="w-full flex items-center justify-between text-sm hover:text-green-400 transition">
+                                    <span class="opacity-60">Manage Consent</span>
+                                    <i class="fa-solid fa-shield-halved"></i>
+                                </button>
+                            </li>
+                            <li>
+                                <button onclick="showSection('activity')"
+                                    class="w-full flex items-center justify-between text-sm hover:text-green-400 transition">
+                                    <span class="opacity-60">View Activity Log</span>
+                                    <i class="fa-solid fa-clock-rotate-left"></i>
+                                </button>
+                            </li>
+                            <li>
+                                <button onclick="showSection('profile')"
+                                    class="w-full flex items-center justify-between text-sm hover:text-green-400 transition">
+                                    <span class="opacity-60">View Full Profile</span>
+                                    <i class="fa-solid fa-user"></i>
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- Recent activity preview -->
+                    <div class="p-6 bg-white border border-gray-100 rounded-[2rem]">
+                        <h3 class="font-bold mb-4 text-sm uppercase tracking-widest text-gray-400">Recent Activity</h3>
+                        <div id="activity-preview" class="space-y-3">
+                            <p class="text-xs text-gray-400">No recent activity.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ══ SECTION: MY BENEFITS ═══════════════════════════════ -->
+        <div id="section-benefits" class="section">
+            <div class="mb-8">
+                <h2 class="text-2xl font-extrabold">My Benefits</h2>
+                <p class="text-gray-400 text-sm mt-1">Your eligibility status across all social security programs.</p>
+            </div>
+            <div id="benefits-list" class="grid sm:grid-cols-2 gap-6">
+                <!-- Filled by JS -->
+            </div>
+        </div>
+
+        <!-- ══ SECTION: ACTIVITY LOG ══════════════════════════════ -->
+        <div id="section-activity" class="section">
+            <div class="mb-8">
+                <h2 class="text-2xl font-extrabold">Activity Log</h2>
+                <p class="text-gray-400 text-sm mt-1">Every time an agency queries your SSID is recorded here.</p>
+            </div>
+            <div class="bg-white rounded-[2rem] border border-gray-100 overflow-hidden">
+                <div id="activity-list" class="divide-y divide-gray-50">
+                    <div class="p-8 text-center text-gray-400 text-sm">Loading activity...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ══ SECTION: CONSENT ═══════════════════════════════════ -->
+        <div id="section-consent" class="section">
+            <div class="mb-8">
+                <h2 class="text-2xl font-extrabold">Consent Management</h2>
+                <p class="text-gray-400 text-sm mt-1">Control which agencies can access your SSID records.</p>
+            </div>
+            <div id="consent-list" class="space-y-4">
+                <!-- Filled by JS -->
+            </div>
+        </div>
+
+        <!-- ══ SECTION: PROFILE ═══════════════════════════════════ -->
+        <div id="section-profile" class="section">
+            <div class="mb-8">
+                <h2 class="text-2xl font-extrabold">My Profile</h2>
+                <p class="text-gray-400 text-sm mt-1">Your registered identity information.</p>
+            </div>
+            <div class="bg-white rounded-[2rem] border border-gray-100 p-8 max-w-2xl">
+                <div class="flex items-center gap-6 mb-8 pb-8 border-b border-gray-100">
+                    <div id="profile-photo" class="w-20 h-20 bg-gray-900 rounded-2xl overflow-hidden flex items-center justify-center text-white font-bold text-2xl">
+                        ?
+                    </div>
+                    <div>
+                        <h3 id="profile-name" class="text-2xl font-extrabold">—</h3>
+                        <p id="profile-ssid" class="text-sm text-green-600 font-bold font-mono mt-1">—</p>
+                        <span class="mt-2 inline-block px-3 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full">NIN Verified</span>
+                    </div>
+                </div>
+                <div id="profile-details" class="grid grid-cols-2 gap-6">
+                    <!-- Filled by JS -->
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- ── Print view (hidden normally) ───────────────────────── -->
+    <div id="print-view" class="hidden fixed inset-0 bg-white z-50 p-16 print-only">
+        <div class="max-w-sm mx-auto">
+            <p class="text-center font-bold text-gray-400 text-xs uppercase tracking-widest mb-6">Federal Republic of Nigeria</p>
+            <div class="ssid-card rounded-[2rem] p-8 text-white mb-6">
+                <p class="text-[10px] opacity-40 tracking-[0.2em] font-bold">SOCIAL SECURITY IDENTITY CARD</p>
+                <div id="print-passport" class="w-16 h-16 bg-gray-700 rounded-xl mt-4 overflow-hidden"></div>
+                <p id="print-ssid" class="text-xl font-mono tracking-widest mt-4 text-green-400"></p>
+                <p id="print-name" class="font-bold uppercase mt-2"></p>
+                <p id="print-nin" class="text-xs opacity-40 mt-1"></p>
+            </div>
+            <p class="text-center text-xs text-gray-400">Issued by CNSSID System • Valid for Identity Verification</p>
+        </div>
+    </div>
+
+    <script>
+        const API   = 'http://localhost:5000/api';
+        const token = localStorage.getItem('token');
+        const name  = localStorage.getItem('name');
+        const ssid  = localStorage.getItem('ssid');
+
+        // ── Auth guard ───────────────────────────────────────────
+        if (!token || localStorage.getItem('role') !== 'citizen') {
+            window.location.href = '../login.html';
+        }
+
+        // ── Program labels ───────────────────────────────────────
+        const PROGRAMS = {
+            CPS:            { label: 'Contributory Pension', icon: 'fa-building-columns', agency: 'PenCom' },
+            CCT:            { label: 'Conditional Cash Transfer', icon: 'fa-hand-holding-dollar', agency: 'NSIPA' },
+            NPOWER:         { label: 'N-Power', icon: 'fa-bolt', agency: 'NSIPA' },
+            SCHOOL_FEEDING: { label: 'School Feeding', icon: 'fa-utensils', agency: 'NSIPA' },
+        };
+
+        // ── Nav switching ────────────────────────────────────────
+        function showSection(name) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => {
+                b.classList.remove('nav-active');
+                b.classList.add('text-gray-400');
+            });
+            document.getElementById(`section-${name}`).classList.add('active');
+            const btn = document.getElementById(`nav-${name}`);
+            btn.classList.add('nav-active');
+            btn.classList.remove('text-gray-400');
+
+            // Load section data on demand
+            if (name === 'activity') loadActivity();
+            if (name === 'consent')  loadConsent();
+        }
+
+        // ── Logout ───────────────────────────────────────────────
+        function logout() {
+            localStorage.clear();
+            window.location.href = './login.html';
+        }
+
+        // ── Format date ──────────────────────────────────────────
+        function formatDate(dateStr) {
+            if (!dateStr) return '—';
+            return new Date(dateStr).toLocaleDateString('en-NG', {
+                day: 'numeric', month: 'short', year: 'numeric',
+                hour: '2-digit', minute: '2-digit'
+            });
+        }
+
+        // ── Status badge ─────────────────────────────────────────
+        function statusBadge(status) {
+            const cls = `status-${status}`;
+            return `<span class="px-3 py-1 rounded-full text-xs font-bold ${cls} uppercase">${status}</span>`;
+        }
+
+        // ── Load profile ─────────────────────────────────────────
+        async function loadProfile() {
+            try {
+                const res  = await fetch(`${API}/citizen/profile`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                const data = await res.json();
+                const c    = data.citizen;
+
+                // Hide loading
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('section-overview').classList.add('active');
+
+                // Header
+                document.getElementById('welcome-msg').innerText = `Welcome, ${c.first_name}!`;
+
+                // Avatar — show passport photo or initials
+                const avatarEl = document.getElementById('avatar-container');
+                if (c.passport_path) {
+                    avatarEl.innerHTML = `<img src="http://localhost:5000${c.passport_path}" class="w-full h-full object-cover">`;
+                } else {
+                    avatarEl.innerText = c.first_name[0] + c.last_name[0];
+                }
+
+                // SSID card
+                document.getElementById('card-ssid').innerText = c.ssid;
+                document.getElementById('card-name').innerText  = `${c.first_name} ${c.last_name}`;
+
+                // Print fields
+                document.getElementById('print-ssid').innerText = c.ssid;
+                document.getElementById('print-name').innerText = `${c.first_name} ${c.last_name}`;
+                document.getElementById('print-nin').innerText  = `NIN: ${c.nin.substring(0,4)}****${c.nin.slice(-3)}`;
+                if (c.passport_path) {
+                    document.getElementById('print-passport').innerHTML =
+                        `<img src="http://localhost:5000${c.passport_path}" class="w-full h-full object-cover">`;
+                }
+
+                // Profile section
+                document.getElementById('profile-name').innerText = `${c.first_name} ${c.last_name}`;
+                document.getElementById('profile-ssid').innerText = c.ssid;
+                if (c.passport_path) {
+                    document.getElementById('profile-photo').innerHTML =
+                        `<img src="http://localhost:5000${c.passport_path}" class="w-full h-full object-cover">`;
+                } else {
+                    document.getElementById('profile-photo').innerText = c.first_name[0] + c.last_name[0];
+                }
+
+                const fields = [
+                    { label: 'NIN',             value: c.nin.substring(0,4) + '****' + c.nin.slice(-3) },
+                    { label: 'Date of Birth',   value: new Date(c.dob).toLocaleDateString('en-NG') },
+                    { label: 'Gender',          value: c.gender },
+                    { label: 'Phone',           value: c.phone },
+                    { label: 'Email',           value: c.email || '—' },
+                    { label: 'State of Origin', value: c.state_of_origin },
+                    { label: 'LGA',             value: c.lga },
+                    { label: 'Employment',      value: c.employment_type },
+                    { label: 'Registered',      value: formatDate(c.created_at) },
+                ];
+
+                document.getElementById('profile-details').innerHTML = fields.map(f => `
+                    <div>
+                        <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">${f.label}</p>
+                        <p class="font-semibold mt-1 capitalize">${f.value}</p>
+                    </div>
+                `).join('');
+
+                // Load benefits
+                loadBenefits();
+
+            } catch (err) {
+                document.getElementById('loading').innerHTML =
+                    `<p class="text-red-500 font-bold">Could not load profile. Is the server running?</p>`;
+            }
+        }
+
+        // ── Load benefits ────────────────────────────────────────
+        async function loadBenefits() {
+            try {
+                const res  = await fetch(`${API}/citizen/benefits`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                const data = await res.json();
+                const benefits = data.benefits;
+
+                // Overview summary (first 2)
+                document.getElementById('benefit-summary').innerHTML = benefits.slice(0,2).map(b => {
+                    const prog = PROGRAMS[b.program];
+                    return `
+                    <div class="p-6 bg-white border border-gray-100 rounded-3xl">
+                        <i class="fa-solid ${prog.icon} text-green-600 mb-3 text-xl"></i>
+                        <p class="text-xs font-bold text-gray-400 uppercase">${prog.label} (${prog.agency})</p>
+                        <div class="mt-2">${statusBadge(b.status)}</div>
+                        ${b.last_verified_at ? `<p class="text-[10px] text-gray-400 mt-2">Verified: ${formatDate(b.last_verified_at)}</p>` : ''}
+                    </div>`;
+                }).join('');
+
+                // Full benefits list
+                document.getElementById('benefits-list').innerHTML = benefits.map(b => {
+                    const prog = PROGRAMS[b.program];
+                    return `
+                    <div class="bg-white border border-gray-100 rounded-3xl p-8">
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-12 h-12 bg-green-50 rounded-2xl flex items-center justify-center">
+                                    <i class="fa-solid ${prog.icon} text-green-600 text-lg"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-extrabold">${prog.label}</h4>
+                                    <p class="text-xs text-gray-400">${prog.agency}</p>
+                                </div>
+                            </div>
+                            ${statusBadge(b.status)}
+                        </div>
+                        ${b.notes ? `<p class="text-sm text-gray-500 mt-2 p-3 bg-gray-50 rounded-xl">${b.notes}</p>` : ''}
+                        <p class="text-xs text-gray-400 mt-3">
+                            ${b.last_verified_at
+                                ? `Last verified: ${formatDate(b.last_verified_at)}`
+                                : 'Not yet verified by an official'}
+                        </p>
+                    </div>`;
+                }).join('');
+
+            } catch (err) {
+                console.error('Benefits load error:', err);
+            }
+        }
+
+        // ── Load activity ────────────────────────────────────────
+        async function loadActivity() {
+            try {
+                const res  = await fetch(`${API}/citizen/activity`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                const data = await res.json();
+                const logs = data.activity;
+
+                if (logs.length === 0) {
+                    document.getElementById('activity-list').innerHTML =
+                        `<div class="p-8 text-center text-gray-400 text-sm">No activity recorded yet.</div>`;
+                    return;
+                }
+
+                document.getElementById('activity-list').innerHTML = logs.map(l => `
+                    <div class="p-6 flex items-center justify-between">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 rounded-full flex items-center justify-center
+                                ${l.result === 'found' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-500'}">
+                                <i class="fa-solid ${l.result === 'found' ? 'fa-check' : 'fa-xmark'} text-sm"></i>
+                            </div>
+                            <div>
+                                <p class="font-bold text-sm">${l.agency} — ${l.purpose.replace(/_/g,' ')}</p>
+                                <p class="text-xs text-gray-400">${formatDate(l.created_at)}</p>
+                            </div>
+                        </div>
+                        <span class="text-xs font-bold px-3 py-1 rounded-full
+                            ${l.result === 'found' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">
+                            ${l.result.toUpperCase()}
+                        </span>
+                    </div>
+                `).join('');
+
+                // Also update activity preview on overview
+                document.getElementById('activity-preview').innerHTML = logs.slice(0,3).map(l => `
+                    <div class="flex gap-3 items-start">
+                        <div class="w-2 h-2 mt-1.5 rounded-full flex-shrink-0
+                            ${l.result === 'found' ? 'bg-green-500' : 'bg-red-400'}"></div>
+                        <div>
+                            <p class="text-xs font-bold">${l.agency} queried your SSID</p>
+                            <p class="text-[10px] text-gray-400">${formatDate(l.created_at)}</p>
+                        </div>
+                    </div>
+                `).join('');
+
+            } catch (err) {
+                console.error('Activity load error:', err);
+            }
+        }
+
+        // ── Load consent ─────────────────────────────────────────
+        async function loadConsent() {
+            try {
+                const res  = await fetch(`${API}/citizen/consent`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                const data = await res.json();
+
+                document.getElementById('consent-list').innerHTML = data.consent.map(c => `
+                    <div class="bg-white border border-gray-100 rounded-2xl p-6 flex items-center justify-between">
+                        <div>
+                            <h4 class="font-extrabold">${c.agency}</h4>
+                            <p class="text-xs text-gray-400 mt-1">
+                                ${c.granted
+                                    ? `Access granted since ${formatDate(c.granted_at)}`
+                                    : `Access revoked ${formatDate(c.revoked_at)}`}
+                            </p>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="text-xs font-bold ${c.granted ? 'text-green-600' : 'text-red-500'}">
+                                ${c.granted ? 'GRANTED' : 'REVOKED'}
+                            </span>
+                            <button onclick="toggleConsent('${c.agency}', ${!c.granted})"
+                                class="px-4 py-2 rounded-xl text-xs font-bold transition
+                                ${c.granted
+                                    ? 'bg-red-50 text-red-600 hover:bg-red-100'
+                                    : 'bg-green-50 text-green-600 hover:bg-green-100'}">
+                                ${c.granted ? 'Revoke' : 'Grant'}
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+
+            } catch (err) {
+                console.error('Consent load error:', err);
+            }
+        }
+
+        // ── Toggle consent ───────────────────────────────────────
+        async function toggleConsent(agency, grant) {
+            try {
+                await fetch(`${API}/citizen/consent/${agency}`, {
+                    method: 'PATCH',
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ granted: grant }),
+                });
+                loadConsent(); // Refresh
+            } catch (err) {
+                console.error('Consent toggle error:', err);
+            }
+        }
+
+        // ── Print ID ─────────────────────────────────────────────
+        function printID() {
+            window.print();
+        }
+
+        // ── Init ─────────────────────────────────────────────────
+        loadProfile();
+        loadActivity(); // Pre-load for overview preview
+    </script>
+</body>
+</html>

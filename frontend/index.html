@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CNSSID | Centralized National Social Security Identity Management</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        :root {
+            --ss-green: #22c55e;
+            --ss-green-soft: #dcfce7;
+            --ss-black: #000000;
+        }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; scroll-behavior: smooth; }
+        
+        /* The SSID Card Styling */
+        .ssid-card {
+            background: var(--ss-black);
+            border-left: 8px solid var(--ss-green);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .ssid-card:hover { transform: translateY(-10px) rotate(-1deg); }
+        .pulse { animation: pulse-green 2s infinite; }
+        @keyframes pulse-green {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+        }
+    </style>
+</head>
+<body class="bg-white text-black">
+
+    <nav class="fixed w-full z-50 bg-white/80 backdrop-blur-md border-b border-gray-100 px-6 md:px-16 py-4 flex justify-between items-center">
+        <div class="flex items-center gap-2">
+            <div class="w-8 h-8 bg-black rounded flex items-center justify-center">
+                <i class="fa-solid fa-shield-halved text-white text-sm"></i>
+            </div>
+            <span class="text-xl font-extrabold tracking-tighter">CNSS<span class="text-green-600">ID</span></span>
+        </div>
+        
+        <div class="hidden md:flex gap-8 font-semibold text-sm uppercase tracking-widest">
+            <a href="#identity" class="hover:text-green-600 transition">Identity</a>
+            <a href="#integration" class="hover:text-green-600 transition">Integrations</a>
+            <a href="#portals" class="hover:text-green-600 transition">Portals</a>
+        </div>
+
+        <div class="flex gap-4">
+            <a href="login.html" class="px-5 py-2 text-sm font-bold border border-black rounded-lg hover:bg-black hover:text-white transition">Sign In</a>
+            <a href="register.html" class="px-5 py-2 text-sm font-bold bg-green-500 text-white rounded-lg shadow-lg shadow-green-200 hover:bg-green-600 transition">Register</a>
+        </div>
+    </nav>
+
+    <section id="identity" class="pt-32 pb-20 px-6 md:px-16 max-w-7xl mx-auto flex flex-col md:flex-row items-center gap-16">
+        <div class="md:w-3/5 space-y-8">
+            <h1 class="text-6xl md:text-8xl font-extrabold leading-[1.05] tracking-tight">
+                Unified <span class="text-green-500">Social</span> Protection.
+            </h1>
+            <p class="text-xl text-gray-500 max-w-xl leading-relaxed">
+                A centralized identity management system linking National Identification Numbers (NIN) to unique Social Security IDs for secure, fragmented-free pension and welfare administration.
+            </p>
+            <div class="flex flex-wrap gap-4">
+            <a href="register.html" class="px-8 py-4 bg-black text-white rounded-xl font-bold flex items-center gap-3 hover:scale-105 transition">
+                <i class="fa-solid fa-fingerprint text-green-400"></i> Enroll with NIN
+            </a>
+            <a href="#integration" class="px-8 py-4 border-2 border-gray-100 rounded-xl font-bold hover:bg-gray-50 transition">
+                System Overview
+            </a>
+            </div>
+        </div>
+
+        <div class="md:w-2/5 flex justify-center">
+            <div class="ssid-card w-full max-w-[400px] h-56 rounded-3xl p-8 relative overflow-hidden text-white">
+                <div class="flex justify-between items-start">
+                    <div class="space-y-1">
+                        <p class="text-[10px] font-bold opacity-50 tracking-[0.2em]">FEDERAL REPUBLIC OF NIGERIA</p>
+                        <p class="text-xs font-extrabold tracking-wider">SOCIAL SECURITY ID</p>
+                    </div>
+                    <i class="fa-solid fa-rss opacity-30 transform rotate-45 text-xl"></i>
+                </div>
+                
+                <div class="mt-8">
+                    <p class="text-2xl font-mono tracking-[0.3em]">5034 • 8812 • 9901</p>
+                </div>
+
+                <div class="mt-8 flex justify-between items-end">
+                    <div>
+                        <p class="text-[10px] opacity-50 uppercase font-bold tracking-widest">Status</p>
+                        <div class="flex items-center gap-2 text-green-400 font-bold text-sm">
+                            <div class="w-2 h-2 bg-green-500 rounded-full pulse"></div> Verified
+                        </div>
+                    </div>
+                    <p class="text-[10px] font-mono opacity-40">NIN-LINKED: 12048***</p>
+                </div>
+                
+                <div class="absolute -right-8 -bottom-8 w-32 h-32 bg-green-500/10 rounded-full"></div>
+            </div>
+        </div>
+    </section>
+
+    <section id="integration" class="py-20 bg-gray-50 px-6 md:px-16">
+        <div class="max-w-7xl mx-auto">
+            <div class="grid md:grid-cols-3 gap-12">
+                <div class="bg-white p-10 rounded-3xl border border-gray-100">
+                    <i class="fa-solid fa-link text-3xl mb-6 text-green-600"></i>
+                    <h3 class="text-2xl font-bold mb-4">NIMC Gateway</h3>
+                    <p class="text-gray-500 leading-relaxed">Real-time authentication via the NINAuth API, ensuring every SSID is rooted in a verified national identity.</p>
+                </div>
+                <div class="bg-white p-10 rounded-3xl border border-gray-100">
+                    <i class="fa-solid fa-vault text-3xl mb-6 text-green-600"></i>
+                    <h3 class="text-2xl font-bold mb-4">Pension Hub</h3>
+                    <p class="text-gray-500 leading-relaxed">Direct interoperability with PenCom records, automating data recapture and RSA tracking for millions.</p>
+                </div>
+                <div class="bg-white p-10 rounded-3xl border border-gray-100">
+                    <i class="fa-solid fa-handshake-angle text-3xl mb-6 text-green-600"></i>
+                    <h3 class="text-2xl font-bold mb-4">Social Safety Nets</h3>
+                    <p class="text-gray-500 leading-relaxed">Eliminating ghost beneficiaries in NSIPA and NASSCO registers through biometric cross-verification.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="portals" class="py-20 px-6 md:px-16 max-w-7xl mx-auto">
+        <h2 class="text-4xl font-extrabold mb-12 text-center">System Access Portals</h2>
+        <div class="grid md:grid-cols-2 gap-8">
+            <div class="group p-1 bg-black rounded-[2rem] transition-transform hover:scale-[1.01]">
+                <div class="bg-white p-12 rounded-[1.8rem] h-full">
+                    <span class="px-4 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full">CITIZEN PORTAL</span>
+                    <h4 class="text-3xl font-extrabold mt-6 mb-4">Self-Service Enrollment</h4>
+                    <p class="text-gray-500 mb-8">Register your biometric profile, link your NIN, and manage your SSID social benefits profile from any device.</p>
+                    <a href="register.html" class="font-bold border-b-2 border-black pb-1 group-hover:text-green-600 group-hover:border-green-600 transition">Proceed to Enrollment <i class="fa-solid fa-arrow-right ml-2"></i></a>
+                </div>
+            </div>
+            <div class="group p-1 bg-gray-100 rounded-[2rem] transition-transform hover:scale-[1.01]">
+                <div class="bg-white p-12 rounded-[1.8rem] h-full">
+                    <span class="px-4 py-1 bg-gray-100 text-gray-700 text-xs font-bold rounded-full">OFFICIAL PORTAL</span>
+                    <h4 class="text-3xl font-extrabold mt-6 mb-4">Verification Interface</h4>
+                    <p class="text-gray-500 mb-8">Administrative tools for PenCom and NSIPA officials to perform real-time identity audits and eligibility checks.</p>
+                    <a href="login.html" class="font-bold border-b-2 border-black pb-1 group-hover:text-green-600 group-hover:border-green-600 transition">Authorized Personnel Only <i class="fa-solid fa-lock ml-2"></i></a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="py-12 border-t border-gray-100 text-center text-sm font-bold text-gray-400">
+        &copy; 2026 CENTRALIZED NATIONAL SOCIAL SECURITY IDENTITY MANAGEMENT SYSTEM. ALL RIGHTS RESERVED.
+    </footer>
+    <script>
+    // Redirect if already logged in
+    const token = localStorage.getItem('token');
+    const role  = localStorage.getItem('role');
+    if (token && role) {
+        if (role === 'citizen')  window.location.href = 'dashboard.html';
+        if (role === 'official') window.location.href = 'official-dashboard.html';
+        if (role === 'admin')    window.location.href = 'admin-dashboard.html';
+    }
+</script>
+
+</body>
+</html>
