@@ -10,387 +10,663 @@
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
         .step-active { color: #22c55e; border-bottom: 2px solid #22c55e; }
-        .upload-box { transition: all 0.2s; }
-        .upload-box:hover { border-color: #22c55e; }
-        .preview-img { width: 80px; height: 80px; object-fit: cover; border-radius: 12px; }
+        .nimc-filled { background:#f0fdf4!important; border-color:#86efac!important; color:#15803d!important; cursor:not-allowed; }
+        .ssid-success-card { background:#000; border-left:6px solid #22c55e; box-shadow:0 20px 40px rgba(0,0,0,0.25); }
+        @keyframes slideUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
+        .animate-slide-up { animation:slideUp 0.5s cubic-bezier(0.16,1,0.3,1) both; }
+        @keyframes popIn { 0%{transform:scale(0.5);opacity:0} 70%{transform:scale(1.15)} 100%{transform:scale(1);opacity:1} }
+        .animate-pop { animation:popIn 0.5s cubic-bezier(0.16,1,0.3,1) 0.15s both; }
+        .cam-feed { width:100%; border-radius:12px; display:block; transform:scaleX(-1); }
+            /* Viewport that crops the fingerprint video to a square finger-area */
+            .fp-viewport { width:300px; height:300px; overflow:hidden; border-radius:12px; position:relative; margin:0 auto; }
+            .fp-viewport .cam-feed { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%) scale(1.4) scaleX(-1); min-width:100%; min-height:100%; object-fit:cover; }
+            /* Position the fingerprint guide centered over the viewport */
+            #fp-guide { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); pointer-events:none; }
+        .mode-btn { transition:all 0.2s; }
+        .mode-btn.active { background:#000; color:#fff; }
+        .mode-btn:not(.active) { background:#f3f4f6; color:#6b7280; }
+        /* Fingerprint guide — square */
+        .fp-guide-inner { width:120px; height:120px; border:2px dashed #22c55e; border-radius:16px; opacity:0.9; background:rgba(34,197,94,0.03); }
     </style>
 </head>
 <body class="bg-gray-50 text-black">
+<nav class="p-6 bg-white border-b border-gray-100 flex justify-between items-center">
+    <a href="index.html" class="text-xl font-extrabold tracking-tighter">CNSS<span class="text-green-600">ID</span></a>
+    <a href="login.html" class="text-sm font-bold text-gray-400 hover:text-black">Already enrolled? Sign In</a>
+</nav>
+<main class="max-w-2xl mx-auto mt-8 p-8 bg-white rounded-3xl shadow-sm border border-gray-100 mb-8">
 
-    <nav class="p-6 bg-white border-b border-gray-100 flex justify-between items-center">
-        <a href="index.html" class="text-xl font-extrabold tracking-tighter">CNSS<span class="text-green-600">ID</span></a>
-        <a href="login.html" class="text-sm font-bold text-gray-400 hover:text-black">Already enrolled? Sign In</a>
-    </nav>
+    <!-- Step indicators -->
+    <div class="flex justify-between mb-10 text-xs font-bold uppercase tracking-widest text-gray-400">
+        <div id="ind-1" class="step-active pb-2">01. NIN Verify</div>
+        <div id="ind-2" class="pb-2">02. Bio-Data</div>
+        <div id="ind-3" class="pb-2">03. Biometrics</div>
+        <div id="ind-4" class="pb-2">04. Complete</div>
+    </div>
 
-    <main class="max-w-2xl mx-auto mt-8 p-8 bg-white rounded-3xl shadow-sm border border-gray-100 mb-8">
-        
-        <!-- Step indicators -->
-        <div class="flex justify-between mb-10 text-xs font-bold uppercase tracking-widest text-gray-400">
-            <div id="ind-1" class="step-active pb-2">01. NIN Verify</div>
-            <div id="ind-2" class="pb-2">02. Bio-Data</div>
-            <div id="ind-3" class="pb-2">03. Biometrics</div>
-            <div id="ind-4" class="pb-2">04. Complete</div>
+    <!-- Error box -->
+    <div id="error-box" class="hidden mb-6 p-4 bg-red-50 border border-red-200 rounded-2xl flex items-center gap-3">
+        <i class="fa-solid fa-circle-exclamation text-red-500"></i>
+        <p id="error-msg" class="text-sm font-semibold text-red-600"></p>
+    </div>
+
+    <!-- STEP 1 -->
+    <div id="step1" class="space-y-6">
+        <div>
+            <h2 class="text-3xl font-extrabold">Begin Enrollment</h2>
+            <p class="text-gray-500 mt-1">Provide your 11-digit NIN and date of birth to verify your identity.</p>
         </div>
-
-        <!-- Error box -->
-        <div id="error-box" class="hidden mb-6 p-4 bg-red-50 border border-red-200 rounded-2xl flex items-center gap-3">
-            <i class="fa-solid fa-circle-exclamation text-red-500"></i>
-            <p id="error-msg" class="text-sm font-semibold text-red-600"></p>
+        <div class="space-y-4">
+            <div class="space-y-2">
+                <label class="block text-sm font-bold">National Identification Number (NIN)</label>
+                <input id="nin" type="text" maxlength="11" placeholder="12345678901"
+                    class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none text-xl tracking-widest font-mono">
+            </div>
+            <div class="space-y-2">
+                <label class="block text-sm font-bold">Date of Birth</label>
+                <input id="dob" type="date" class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none">
+            </div>
+            <div class="p-4 bg-green-50 rounded-xl flex gap-4 items-start">
+                <i class="fa-solid fa-circle-info text-green-600 mt-0.5"></i>
+                <p class="text-xs text-green-800 font-medium">Your NIN will be verified via the NIMC NINAuth secure gateway. Your legal name, gender and phone on file with NIMC will be retrieved automatically.</p>
+            </div>
         </div>
+        <button id="verify-btn" type="button" onclick="verifyNIN()"
+            class="w-full py-4 bg-black text-white rounded-xl font-bold flex items-center justify-center gap-3 hover:bg-gray-800 transition">
+            <span id="verify-text">Verify & Continue</span>
+            <i id="verify-icon" class="fa-solid fa-arrow-right"></i>
+        </button>
+    </div>
 
-        <!-- ── STEP 1: NIN Verification ── -->
-        <div id="step1" class="space-y-6">
+    <!-- STEP 2 -->
+    <div id="step2" class="hidden space-y-5">
+        <div>
+            <h2 class="text-3xl font-extrabold">Personal Profile</h2>
+            <p class="text-gray-500 mt-1">Complete your registration details.</p>
+        </div>
+        <div id="nimc-badge" class="hidden p-4 bg-green-50 border border-green-200 rounded-2xl flex items-center gap-3">
+            <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
+                <i class="fa-solid fa-check text-white text-xs"></i>
+            </div>
             <div>
-                <h2 class="text-3xl font-extrabold">Begin Enrollment</h2>
-                <p class="text-gray-500 mt-1">Provide your 11-digit NIN and date of birth to verify your identity.</p>
+                <p class="text-sm font-bold text-green-800">Identity Verified via NIMC NINAuth</p>
+                <p class="text-xs text-green-600 mt-0.5">Your legal name, gender and phone have been retrieved from NIMC and cannot be modified.</p>
             </div>
-
-            <div class="space-y-4">
-                <div class="space-y-2">
-                    <label class="block text-sm font-bold">National Identification Number (NIN)</label>
-                    <input id="nin" type="text" maxlength="11" placeholder="12345678901"
-                        class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none text-xl tracking-widest font-mono">
-                </div>
-
-                <div class="space-y-2">
-                    <label class="block text-sm font-bold">Date of Birth</label>
-                    <input id="dob" type="date"
-                        class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none">
-                </div>
-
-                <div class="p-4 bg-green-50 rounded-xl flex gap-4 items-start">
-                    <i class="fa-solid fa-circle-info text-green-600 mt-0.5"></i>
-                    <p class="text-xs text-green-800 font-medium">Your data will be verified via the NIMC NINAuth secure gateway. Consent is implied by proceeding.</p>
-                </div>
-            </div>
-
-            <button id="verify-btn" type="button"
-                class="w-full py-4 bg-black text-white rounded-xl font-bold flex items-center justify-center gap-3 hover:bg-gray-800 transition">
-                <span id="verify-text">Verify & Continue</span>
-                <i id="verify-icon" class="fa-solid fa-arrow-right"></i>
-            </button>
         </div>
-
-        <!-- ── STEP 2: Bio-Data ── -->
-        <div id="step2" class="hidden space-y-5">
-            <div>
-                <h2 class="text-3xl font-extrabold">Personal Profile</h2>
-                <p class="text-gray-500 mt-1">Complete your registration details.</p>
-            </div>
-
-            <div class="grid grid-cols-2 gap-4">
-                <div class="space-y-2">
-                    <label class="text-xs font-bold text-gray-500 uppercase">First Name</label>
-                    <input id="first_name" type="text"
-                        class="w-full p-3 bg-white border border-gray-200 rounded-lg font-semibold" >
-                </div>
-                <div class="space-y-2">
-                    <label class="text-xs font-bold text-gray-500 uppercase">Last Name</label>
-                    <input id="last_name" type="text"
-                        class="w-full p-3 bg-white border border-gray-200 rounded-lg font-semibold" >
-                </div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-4">
-                <div class="space-y-2">
-                    <label class="text-xs font-bold text-gray-500 uppercase">Gender</label>
-                    <select id="gender" class="w-full p-3 border border-gray-200 rounded-lg bg-white">
-                        <option value="">Select gender</option>
-                        <option value="male">Male</option>
-                        <option value="female">Female</option>
-                        <option value="other">Other</option>
-                    </select>
-                </div>
-                <div class="space-y-2">
-                    <label class="text-xs font-bold text-gray-500 uppercase">Phone Number</label>
-                    <input id="phone" type="tel" placeholder="08012345678"
-                        class="w-full p-3 border border-gray-200 rounded-lg">
-                </div>
-            </div>
-
+        <div class="grid grid-cols-2 gap-4">
             <div class="space-y-2">
-                <label class="text-xs font-bold text-gray-500 uppercase">Email Address</label>
-                <input id="email" type="email" placeholder="email@example.com"
-                    class="w-full p-3 border border-gray-200 rounded-lg">
+                <label class="text-xs font-bold text-gray-500 uppercase flex items-center gap-2">First Name
+                    <span id="badge-first_name" class="hidden px-2 py-0.5 bg-green-100 text-green-700 text-[10px] font-bold rounded-full"><i class="fa-solid fa-shield-halved mr-1"></i>NIMC</span>
+                </label>
+                <input id="first_name" type="text" class="w-full p-3 bg-white border border-gray-200 rounded-lg font-semibold transition-all duration-300">
             </div>
-
             <div class="space-y-2">
-                <label class="text-xs font-bold text-gray-500 uppercase">Password</label>
-                <input id="password" type="password" placeholder="Create a secure password"
-                    class="w-full p-3 border border-gray-200 rounded-lg">
+                <label class="text-xs font-bold text-gray-500 uppercase flex items-center gap-2">Last Name
+                    <span id="badge-last_name" class="hidden px-2 py-0.5 bg-green-100 text-green-700 text-[10px] font-bold rounded-full"><i class="fa-solid fa-shield-halved mr-1"></i>NIMC</span>
+                </label>
+                <input id="last_name" type="text" class="w-full p-3 bg-white border border-gray-200 rounded-lg font-semibold transition-all duration-300">
             </div>
-
-            <div class="grid grid-cols-2 gap-4">
-                <div class="space-y-2">
-                    <label class="text-xs font-bold text-gray-500 uppercase">State of Origin</label>
-                    <input id="state_of_origin" type="text" placeholder="e.g. Nasarawa"
-                        class="w-full p-3 border border-gray-200 rounded-lg">
-                </div>
-                <div class="space-y-2">
-                    <label class="text-xs font-bold text-gray-500 uppercase">LGA</label>
-                    <input id="lga" type="text" placeholder="e.g. Lafia"
-                        class="w-full p-3 border border-gray-200 rounded-lg">
-                </div>
-            </div>
-
+        </div>
+        <div class="grid grid-cols-2 gap-4">
             <div class="space-y-2">
-                <label class="text-xs font-bold text-gray-500 uppercase">Employment Type</label>
-                <select id="employment_type" class="w-full p-3 border border-gray-200 rounded-lg bg-white">
-                    <option value="formal">Formal (Government/Private Sector)</option>
-                    <option value="informal">Informal (Self-employed/Trade)</option>
-                    <option value="student">Student</option>
-                    <option value="unemployed">Unemployed</option>
-                    <option value="retired">Retired</option>
+                <label class="text-xs font-bold text-gray-500 uppercase flex items-center gap-2">Gender
+                    <span id="badge-gender" class="hidden px-2 py-0.5 bg-green-100 text-green-700 text-[10px] font-bold rounded-full"><i class="fa-solid fa-shield-halved mr-1"></i>NIMC</span>
+                </label>
+                <select id="gender" class="w-full p-3 border border-gray-200 rounded-lg bg-white transition-all duration-300">
+                    <option value="">Select gender</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
                 </select>
             </div>
+            <div class="space-y-2">
+                <label class="text-xs font-bold text-gray-500 uppercase flex items-center gap-2">Phone Number
+                    <span id="badge-phone" class="hidden px-2 py-0.5 bg-green-100 text-green-700 text-[10px] font-bold rounded-full"><i class="fa-solid fa-shield-halved mr-1"></i>NIMC</span>
+                </label>
+                <input id="phone" type="tel" placeholder="08012345678" class="w-full p-3 border border-gray-200 rounded-lg transition-all duration-300">
+            </div>
+        </div>
+        <div class="space-y-2">
+            <label class="text-xs font-bold text-gray-500 uppercase">Email Address</label>
+            <input id="email" type="email" placeholder="email@example.com" class="w-full p-3 border border-gray-200 rounded-lg">
+        </div>
+        <div class="space-y-2">
+            <label class="text-xs font-bold text-gray-500 uppercase">Password</label>
+            <input id="password" type="password" placeholder="Create a secure password (min. 8 characters)" class="w-full p-3 border border-gray-200 rounded-lg">
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+            <div class="space-y-2">
+                <label class="text-xs font-bold text-gray-500 uppercase">State of Origin</label>
+                <select id="state_of_origin" onchange="populateLGAs(this.value)" class="w-full p-3 border border-gray-200 rounded-lg bg-white">
+                    <option value="">Loading states...</option>
+                </select>
+            </div>
+            <div class="space-y-2">
+                <label class="text-xs font-bold text-gray-500 uppercase">LGA</label>
+                <select id="lga" class="w-full p-3 border border-gray-200 rounded-lg bg-white">
+                    <option value="">Select state first</option>
+                </select>
+            </div>
+        </div>
+        <div class="space-y-2">
+            <label class="text-xs font-bold text-gray-500 uppercase">Employment Type</label>
+            <select id="employment_type" class="w-full p-3 border border-gray-200 rounded-lg bg-white">
+                <option value="formal">Formal (Government / Private Sector)</option>
+                <option value="informal">Informal (Self-employed / Trade)</option>
+                <option value="student">Student</option>
+                <option value="unemployed">Unemployed</option>
+                <option value="retired">Retired</option>
+            </select>
+        </div>
+        <button type="button" onclick="goToStep3()" class="w-full py-4 bg-black text-white rounded-xl font-bold hover:bg-gray-800 transition">
+            Confirm Details & Continue
+        </button>
+    </div>
 
-            <button id="bio-next-btn" type="button"
-                class="w-full py-4 bg-black text-white rounded-xl font-bold hover:bg-gray-800 transition">
-                Confirm Details & Continue
-            </button>
+    <!-- STEP 3 -->
+    <div id="step3" class="hidden space-y-6">
+        <div class="text-center">
+            <h2 class="text-3xl font-extrabold">Biometric Capture</h2>
+            <p class="text-gray-500 mt-1">Capture your fingerprint and passport photograph using your camera.</p>
         </div>
 
-        <!-- ── STEP 3: Biometrics ── -->
-        <div id="step3" class="hidden space-y-6">
-            <div class="text-center">
-                <h2 class="text-3xl font-extrabold">Biometric Capture</h2>
-                <p class="text-gray-500 mt-1">Upload your fingerprint image and passport photograph.</p>
+        <!-- FINGERPRINT -->
+        <div class="space-y-3">
+            <label class="text-xs font-bold text-gray-500 uppercase">Fingerprint Capture</label>
+            <div class="flex gap-2 p-1 bg-gray-100 rounded-xl">
+                <button type="button" id="fp-mode-snap" onclick="setFpMode('snap')" class="mode-btn active flex-1 py-2.5 rounded-lg text-sm font-bold flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-camera"></i> Scan Finger
+                </button>
+                <button type="button" id="fp-mode-upload" onclick="setFpMode('upload')" class="mode-btn flex-1 py-2.5 rounded-lg text-sm font-bold flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-upload"></i> Upload Image
+                </button>
             </div>
 
-            <!-- Fingerprint upload -->
-            <div class="space-y-2">
-                <label class="text-xs font-bold text-gray-500 uppercase">Fingerprint Image (Right Thumb)</label>
-                <div class="upload-box border-2 border-dashed border-gray-200 rounded-2xl p-6 text-center cursor-pointer"
-                    onclick="document.getElementById('fingerprint').click()">
-                    <input type="file" id="fingerprint" class="hidden" accept="image/jpeg,image/png" onchange="previewImage(this, 'fp-preview')">
-                    <div id="fp-preview-container">
-                        <i class="fa-solid fa-fingerprint text-4xl text-gray-300"></i>
-                        <p class="mt-2 text-sm font-bold text-gray-400">Click to upload fingerprint (JPG/PNG)</p>
+            <!-- FP webcam snap -->
+            <div id="fp-snap-mode" class="space-y-3">
+                <div class="relative bg-gray-900 rounded-2xl overflow-hidden flex items-center justify-center" style="min-height:200px;">
+                    <div class="fp-viewport">
+                        <video id="fp-video" autoplay playsinline class="cam-feed hidden"></video>
+                        <canvas id="fp-canvas" class="hidden"></canvas>
+                        <div id="fp-cam-placeholder" class="absolute inset-0 flex flex-col items-center justify-center text-white gap-2">
+                            <i class="fa-solid fa-fingerprint text-5xl opacity-20"></i>
+                            <p class="text-sm font-bold opacity-40">Camera not started</p>
+                            <p class="text-xs opacity-30">Click "Start Camera" then place thumb in the box</p>
+                        </div>
+                        <!-- Square thumb guide (centered inside viewport) -->
+                        <div id="fp-guide" class="hidden flex items-center justify-center pointer-events-none">
+                            <div class="fp-guide-inner flex items-center justify-center">
+                                <i class="fa-solid fa-fingerprint text-green-400 text-4xl opacity-60"></i>
+                            </div>
+                        </div>
                     </div>
-                    <img id="fp-preview" class="preview-img hidden mx-auto mt-2">
+                    <img id="fp-snap-preview" class="hidden w-full rounded-2xl">
+                    <button type="button" id="fp-retake-btn" onclick="retakeFP()" class="hidden absolute top-3 right-3 px-3 py-1.5 bg-black/70 text-white text-xs font-bold rounded-lg hover:bg-black transition">
+                        <i class="fa-solid fa-rotate-left mr-1"></i> Retake
+                    </button>
+                    <!-- Thumb selection shown when camera is live -->
+                    <div id="fp-thumb-select" class="hidden absolute bottom-3 left-0 right-0 flex justify-center gap-2">
+                        <button type="button" onclick="setThumb('left')" id="thumb-left"
+                            class="px-3 py-1.5 bg-black/60 text-white text-xs font-bold rounded-lg hover:bg-green-600 transition">Left Thumb</button>
+                        <button type="button" onclick="setThumb('right')" id="thumb-right"
+                            class="px-3 py-1.5 bg-green-600 text-white text-xs font-bold rounded-lg hover:bg-green-700 transition">Right Thumb ✓</button>
+                    </div>
+                </div>
+                <div class="flex gap-3">
+                    <button type="button" id="fp-start-btn" onclick="startFPCamera()" class="flex-1 py-3 bg-gray-900 text-white rounded-xl font-bold text-sm hover:bg-gray-700 transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-video"></i> Start Camera
+                    </button>
+                    <button type="button" id="fp-capture-btn" onclick="captureFP()" class="hidden flex-1 py-3 bg-green-500 text-white rounded-xl font-bold text-sm hover:bg-green-600 transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-fingerprint"></i> Capture Print
+                    </button>
+                </div>
+                <p id="fp-thumb-label" class="text-xs text-gray-400 text-center"><i class="fa-solid fa-circle-info mr-1"></i>Place your <strong>right thumb</strong> flat on the camera lens area and hold still</p>
+            </div>
+
+            <!-- FP upload -->
+            <div id="fp-upload-mode" class="hidden">
+                <div class="border-2 border-dashed border-gray-200 rounded-2xl p-6 text-center cursor-pointer hover:border-green-400 transition" onclick="document.getElementById('fingerprint').click()">
+                    <input type="file" id="fingerprint" class="hidden" accept="image/jpeg,image/png" onchange="handleFPUpload(this)">
+                    <div id="fp-upload-placeholder">
+                        <i class="fa-solid fa-fingerprint text-4xl text-gray-300"></i>
+                        <p class="mt-2 text-sm font-bold text-gray-400">Click to upload fingerprint scan (JPG/PNG)</p>
+                    </div>
+                    <img id="fp-upload-preview" class="hidden mx-auto mt-2 w-20 h-20 object-cover rounded-xl">
                 </div>
             </div>
+        </div>
 
-            <!-- Passport upload -->
-            <div class="space-y-2">
-                <label class="text-xs font-bold text-gray-500 uppercase">Passport Photograph</label>
-                <div class="upload-box border-2 border-dashed border-gray-200 rounded-2xl p-6 text-center cursor-pointer"
-                    onclick="document.getElementById('passport').click()">
-                    <input type="file" id="passport" class="hidden" accept="image/jpeg,image/png" onchange="previewImage(this, 'pp-preview')">
-                    <div id="pp-preview-container">
-                        <i class="fa-solid fa-camera text-4xl text-gray-300"></i>
+        <!-- PASSPORT PHOTO -->
+        <div class="space-y-3">
+            <label class="text-xs font-bold text-gray-500 uppercase">Passport Photograph</label>
+            <div class="flex gap-2 p-1 bg-gray-100 rounded-xl">
+                <button type="button" id="pp-mode-snap" onclick="setPPMode('snap')" class="mode-btn active flex-1 py-2.5 rounded-lg text-sm font-bold flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-camera"></i> Take Photo
+                </button>
+                <button type="button" id="pp-mode-upload" onclick="setPPMode('upload')" class="mode-btn flex-1 py-2.5 rounded-lg text-sm font-bold flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-upload"></i> Upload File
+                </button>
+            </div>
+
+            <!-- PP webcam snap -->
+            <div id="pp-snap-mode" class="space-y-3">
+                <div class="relative bg-gray-900 rounded-2xl overflow-hidden" style="min-height:220px;">
+                    <video id="pp-video" autoplay playsinline class="cam-feed hidden"></video>
+                    <canvas id="pp-canvas" class="hidden"></canvas>
+                    <div id="pp-cam-placeholder" class="absolute inset-0 flex flex-col items-center justify-center text-white">
+                        <i class="fa-solid fa-user text-4xl opacity-20 mb-3"></i>
+                        <p class="text-sm font-bold opacity-40">Camera not started</p>
+                    </div>
+                    <div id="pp-face-guide" class="hidden absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <div class="w-32 h-40 border-2 border-green-400 border-dashed rounded-full opacity-50"></div>
+                    </div>
+                    <img id="pp-snap-preview" class="hidden w-full rounded-2xl">
+                    <button type="button" id="pp-retake-btn" onclick="retakePP()" class="hidden absolute top-3 right-3 px-3 py-1.5 bg-black/70 text-white text-xs font-bold rounded-lg hover:bg-black transition">
+                        <i class="fa-solid fa-rotate-left mr-1"></i> Retake
+                    </button>
+                </div>
+                <div class="flex gap-3">
+                    <button type="button" id="pp-start-btn" onclick="startPPCamera()" class="flex-1 py-3 bg-gray-900 text-white rounded-xl font-bold text-sm hover:bg-gray-700 transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-video"></i> Start Camera
+                    </button>
+                    <button type="button" id="pp-capture-btn" onclick="capturePP()" class="hidden flex-1 py-3 bg-green-500 text-white rounded-xl font-bold text-sm hover:bg-green-600 transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-circle text-white"></i> Capture
+                    </button>
+                </div>
+                <p class="text-xs text-gray-400 text-center"><i class="fa-solid fa-circle-info mr-1"></i>Face the camera directly · Good lighting · Remove glasses if possible</p>
+            </div>
+
+            <!-- PP upload -->
+            <div id="pp-upload-mode" class="hidden">
+                <div class="border-2 border-dashed border-gray-200 rounded-2xl p-6 text-center cursor-pointer hover:border-green-400 transition" onclick="document.getElementById('passport-file').click()">
+                    <input type="file" id="passport-file" class="hidden" accept="image/jpeg,image/png" onchange="handlePPUpload(this)">
+                    <div id="pp-upload-placeholder">
+                        <i class="fa-solid fa-image text-4xl text-gray-300"></i>
                         <p class="mt-2 text-sm font-bold text-gray-400">Click to upload passport photo (JPG/PNG)</p>
                     </div>
-                    <img id="pp-preview" class="preview-img hidden mx-auto mt-2">
+                    <img id="pp-upload-preview" class="hidden mx-auto mt-2 w-20 h-20 object-cover rounded-xl">
                 </div>
             </div>
-
-            <button id="submit-btn" type="button" class="w-full py-4 bg-green-500 text-white rounded-xl font-bold shadow-lg shadow-green-200 hover:bg-green-600 transition flex items-center justify-center gap-3">
-                <span id="submit-text">Generate My SSID</span>
-                <i id="submit-icon" class="fa-solid fa-fingerprint"></i>
-            </button>
         </div>
 
-        <!-- ── STEP 4: Success ── -->
-        <div id="step4" class="hidden text-center space-y-6 py-6">
-            <div class="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto">
-                <i class="fa-solid fa-circle-check text-4xl"></i>
-            </div>
-            <div>
-                <h2 class="text-3xl font-extrabold">Enrollment Complete!</h2>
-                <p class="text-gray-500 mt-2">Your Social Security ID has been generated.</p>
-            </div>
-            <div class="bg-black text-white rounded-2xl p-6 mx-auto max-w-xs">
-                <p class="text-xs opacity-50 uppercase tracking-widest mb-2">Your SSID</p>
-                <p id="ssid-display" class="text-2xl font-mono font-bold tracking-widest text-green-400"></p>
-                <p id="name-display" class="text-sm mt-3 opacity-70"></p>
-            </div>
-            <p class="text-sm text-gray-400">Keep your SSID safe. You will use it to access all social security services.</p>
-            <a href="login.html"
-                class="inline-block w-full py-4 bg-black text-white rounded-xl font-bold hover:bg-gray-800 transition">
-                Proceed to Login
-            </a>
+        <button id="submit-btn" type="button" onclick="submitRegistration()"
+            class="w-full py-4 bg-green-500 text-white rounded-xl font-bold shadow-lg shadow-green-200 hover:bg-green-600 transition flex items-center justify-center gap-3">
+            <span id="submit-text">Generate My SSID</span>
+            <i id="submit-icon" class="fa-solid fa-fingerprint"></i>
+        </button>
+    </div>
+
+    <!-- STEP 4 -->
+    <div id="step4" class="hidden text-center space-y-6 py-6 animate-slide-up">
+        <div class="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto animate-pop">
+            <i class="fa-solid fa-circle-check text-4xl"></i>
         </div>
+        <div>
+            <h2 class="text-3xl font-extrabold">Enrollment Complete!</h2>
+            <p class="text-gray-500 mt-2">Your Social Security ID has been generated and linked to your NIN.</p>
+        </div>
+        <div class="ssid-success-card rounded-2xl p-8 mx-auto max-w-sm text-left text-white">
+            <div class="flex justify-between items-start mb-6">
+                <div>
+                    <p class="text-[10px] font-bold opacity-40 tracking-[0.2em]">FEDERAL REPUBLIC OF NIGERIA</p>
+                    <p class="text-xs font-extrabold tracking-wider mt-1">SOCIAL SECURITY IDENTITY</p>
+                </div>
+                <i class="fa-solid fa-fingerprint text-green-500 text-xl"></i>
+            </div>
+            <p id="ssid-display" class="text-xl font-mono font-bold tracking-[0.2em] text-green-400">—</p>
+            <div class="mt-4">
+                <p class="text-[10px] opacity-40 uppercase font-bold tracking-widest">ID Holder</p>
+                <p id="name-display" class="font-bold uppercase tracking-widest text-sm mt-1">—</p>
+            </div>
+            <div class="mt-6 flex items-center gap-2">
+                <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+                <span class="text-[10px] font-bold text-green-400 uppercase tracking-widest">NIN Verified · Active</span>
+            </div>
+        </div>
+        <div class="p-4 bg-amber-50 border border-amber-200 rounded-xl flex gap-3 items-start text-left">
+            <i class="fa-solid fa-triangle-exclamation text-amber-500 mt-0.5 flex-shrink-0"></i>
+            <p class="text-xs text-amber-800 font-medium">Keep your SSID safe. You will use it along with your email and password to access all social security services. Screenshot or note it down before proceeding.</p>
+        </div>
+        <a href="login.html" class="inline-block w-full py-4 bg-black text-white rounded-xl font-bold hover:bg-gray-800 transition">
+            Proceed to Login <i class="fa-solid fa-arrow-right ml-2"></i>
+        </a>
+    </div>
 
-    </main>
+</main>
+<script>
+const API = 'http://localhost:5000/api';
+let ninData      = {};
+let fpStream     = null;  // fingerprint webcam stream
+let ppStream     = null;  // passport webcam stream
+let fpFile       = null;  // final fingerprint file
+let ppFile       = null;  // final passport file
+let selectedThumb = 'right';
+const FP_VIDEO_SCALE = 1.9; // increased for laptop webcams to crop tighter to finger
 
-    <script>
-        const API = 'http://localhost:5000/api';
+// ── Utilities ─────────────────────────────────────────────────
+function showError(msg) {
+    document.getElementById('error-msg').innerText = msg;
+    document.getElementById('error-box').classList.remove('hidden');
+    document.getElementById('error-box').scrollIntoView({ behavior:'smooth' });
+}
+function hideError() { document.getElementById('error-box').classList.add('hidden'); }
 
-        // Store NIN verification result
-        let ninData = {};
+function setStep(n) {
+    [1,2,3,4].forEach(i => {
+        document.getElementById('step'+i).classList.add('hidden');
+        document.getElementById('ind-'+i).classList.remove('step-active');
+    });
+    document.getElementById('step'+n).classList.remove('hidden');
+    document.getElementById('ind-'+n).classList.add('step-active');
+    hideError();
+    window.scrollTo({ top:0, behavior:'smooth' });
+    if (n !== 3) { stopStream(fpStream); stopStream(ppStream); fpStream = ppStream = null; }
+}
 
-        // ── Error handling ───────────────────────────────────────
-        function showError(msg) {
-            const box = document.getElementById('error-box');
-            document.getElementById('error-msg').innerText = msg;
-            box.classList.remove('hidden');
-            box.scrollIntoView({ behavior: 'smooth' });
-        }
-        function hideError() {
-            document.getElementById('error-box').classList.add('hidden');
-        }
+function stopStream(stream) {
+    if (stream) stream.getTracks().forEach(t => t.stop());
+}
 
-        document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('verify-btn').addEventListener('click', verifyNIN);
-            document.getElementById('bio-next-btn').addEventListener('click', goToStep3);
-            document.getElementById('submit-btn').addEventListener('click', submitRegistration);
+function setVerifyLoading(on) {
+    document.getElementById('verify-btn').disabled = on;
+    document.getElementById('verify-btn').classList.toggle('opacity-70', on);
+    document.getElementById('verify-text').innerText = on ? 'Verifying with NIMC...' : 'Verify & Continue';
+    document.getElementById('verify-icon').className = on ? 'fa-solid fa-spinner fa-spin' : 'fa-solid fa-arrow-right';
+}
+function setSubmitLoading(on) {
+    document.getElementById('submit-btn').disabled = on;
+    document.getElementById('submit-btn').classList.toggle('opacity-70', on);
+    document.getElementById('submit-text').innerText = on ? 'Generating SSID...' : 'Generate My SSID';
+    document.getElementById('submit-icon').className = on ? 'fa-solid fa-spinner fa-spin' : 'fa-solid fa-fingerprint';
+}
 
-            const savedStep = localStorage.getItem('register-step');
-            const savedSuccess = localStorage.getItem('register-success');
-            if (savedStep === '4' && savedSuccess) {
-                const data = JSON.parse(savedSuccess);
-                document.getElementById('ssid-display').innerText = data.ssid;
-                document.getElementById('name-display').innerText = data.name;
-                setStep(4);
-            }
+// ── NIMC Autofill ──────────────────────────────────────────────
+function autofillFromNIMC(data) {
+    const map = { first_name:data.firstName, last_name:data.lastName, phone:data.phone };
+    let any = false;
+    Object.entries(map).forEach(([id, val]) => {
+        if (!val) return;
+        const el = document.getElementById(id);
+        el.value = val; el.readOnly = true; el.classList.add('nimc-filled');
+        document.getElementById('badge-'+id).classList.remove('hidden');
+        any = true;
+    });
+    if (data.gender) {
+        const el = document.getElementById('gender');
+        el.value = data.gender; el.disabled = true; el.classList.add('nimc-filled');
+        document.getElementById('badge-gender').classList.remove('hidden');
+        any = true;
+    }
+    if (any) document.getElementById('nimc-badge').classList.remove('hidden');
+}
+
+// ── States + LGAs ─────────────────────────────────────────────
+async function loadStates() {
+    const sel = document.getElementById('state_of_origin');
+    try {
+        const res = await fetch('https://countriesnow.space/api/v0.1/countries/states', {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ country:'Nigeria' })
         });
+        const json = await res.json();
+        const states = json.data.states.map(s => s.name).sort();
+        sel.innerHTML = '<option value="">Select state</option>';
+        states.forEach(s => { const o = document.createElement('option'); o.value=s; o.textContent=s; sel.appendChild(o); });
+    } catch {
+        const fb = ["Abia","Adamawa","Akwa Ibom","Anambra","Bauchi","Bayelsa","Benue","Borno","Cross River","Delta","Ebonyi","Edo","Ekiti","Enugu","FCT - Abuja","Gombe","Imo","Jigawa","Kaduna","Kano","Katsina","Kebbi","Kogi","Kwara","Lagos","Nasarawa","Niger","Ogun","Ondo","Osun","Oyo","Plateau","Rivers","Sokoto","Taraba","Yobe","Zamfara"];
+        sel.innerHTML = '<option value="">Select state</option>';
+        fb.forEach(s => { const o = document.createElement('option'); o.value=s; o.textContent=s; sel.appendChild(o); });
+    }
+}
 
-        // ── Step indicator update ────────────────────────────────
-        function setStep(step) {
-            localStorage.setItem('register-step', step);
-            [1,2,3,4].forEach(i => {
-                document.getElementById(`step${i}`).classList.add('hidden');
-                document.getElementById(`ind-${i}`).classList.remove('step-active');
-            });
-            document.getElementById(`step${step}`).classList.remove('hidden');
-            document.getElementById(`ind-${step}`).classList.add('step-active');
-            hideError();
+async function populateLGAs(state) {
+    const sel = document.getElementById('lga');
+    if (!state) { sel.innerHTML = '<option value="">Select state first</option>'; return; }
+    sel.innerHTML = '<option value="">Loading LGAs...</option>';
+    try {
+        const res = await fetch('https://countriesnow.space/api/v0.1/countries/state/cities', {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ country:'Nigeria', state })
+        });
+        const json = await res.json();
+        if (json.error || !json.data?.length) throw new Error();
+        sel.innerHTML = '<option value="">Select LGA</option>';
+        json.data.sort().forEach(lga => { const o = document.createElement('option'); o.value=lga; o.textContent=lga; sel.appendChild(o); });
+    } catch {
+        sel.innerHTML = '<option value="">Enter LGA below</option>';
+        if (!document.getElementById('lga-manual')) {
+            const inp = document.createElement('input');
+            inp.type='text'; inp.id='lga-manual'; inp.placeholder='Enter your LGA manually';
+            inp.className='w-full mt-2 p-3 border border-gray-200 rounded-lg';
+            sel.parentElement.appendChild(inp);
         }
+    }
+}
 
-        // ── Image preview ────────────────────────────────────────
-        function previewImage(input, previewId) {
-            const preview = document.getElementById(previewId);
-            if (input.files && input.files[0]) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    preview.src = e.target.result;
-                    preview.classList.remove('hidden');
-                };
-                reader.readAsDataURL(input.files[0]);
-            }
-        }
+function getLGA() {
+    const m = document.getElementById('lga-manual');
+    return m ? m.value.trim() : document.getElementById('lga').value;
+}
 
-        // ── STEP 1: Verify NIN ───────────────────────────────────
-        async function verifyNIN(event) {
-            event?.preventDefault();
-            hideError();
-            const nin = document.getElementById('nin').value.trim();
-            const dob = document.getElementById('dob').value;
+// ── Generic webcam helper ──────────────────────────────────────
+async function startCam(videoId, streamRef, placeholderId, guideId, startBtnId, captureBtnId, extraShowIds=[]) {
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'user', width:{ideal:640}, height:{ideal:480} } });
+        const vid = document.getElementById(videoId);
+        vid.srcObject = stream;
+        vid.classList.remove('hidden');
+        document.getElementById(placeholderId).classList.add('hidden');
+        document.getElementById(guideId).classList.remove('hidden');
+        document.getElementById(startBtnId).classList.add('hidden');
+        document.getElementById(captureBtnId).classList.remove('hidden');
+        extraShowIds.forEach(id => document.getElementById(id).classList.remove('hidden'));
+        return stream;
+    } catch {
+        showError('Camera access denied. Please allow camera permissions or use the Upload option.');
+        return null;
+    }
+}
 
-            if (!nin || nin.length !== 11 || !/^\d+$/.test(nin)) {
-                showError('NIN must be exactly 11 digits.');
-                return;
-            }
-            if (!dob) {
-                showError('Please enter your date of birth.');
-                return;
-            }
+function snapFromCam(videoId, canvasId, previewId, videoEl, mirror=true) {
+    const vid = document.getElementById(videoId);
+    const cnv = document.getElementById(canvasId);
+    const ctx = cnv.getContext('2d');
 
-            // Set loading
-            document.getElementById('verify-text').innerText = 'Verifying with NIMC...';
-            document.getElementById('verify-icon').className = 'fa-solid fa-spinner fa-spin';
-            document.getElementById('verify-btn').disabled = true;
+    // Special handling for fingerprint: produce a centered square crop
+    if (videoId === 'fp-video') {
+        const outSize = 300; // output square size (px)
+        cnv.width = outSize; cnv.height = outSize;
 
-            try {
-                // We verify by attempting a lightweight check
-                // The full verification happens on final submission
-                // For now, just validate format and proceed
-                await new Promise(r => setTimeout(r, 800)); // Simulate NINAuth delay
+        const vw = vid.videoWidth;
+        const vh = vid.videoHeight;
+        // Compute crop box in video pixels that corresponds to the centered viewport
+        const cropSize = Math.min(vw, vh) / FP_VIDEO_SCALE;
+        const sx = Math.max(0, (vw - cropSize) / 2);
+        const sy = Math.max(0, (vh - cropSize) / 2);
 
-                // Store for later submission
-                ninData = { nin, dob };
+        // optional horizontal mirror
+        ctx.save();
+        if (mirror) { ctx.translate(cnv.width,0); ctx.scale(-1,1); }
+        ctx.drawImage(vid, sx, sy, cropSize, cropSize, 0, 0, outSize, outSize);
+        ctx.restore();
 
-                // Proceed to step 2
-                setStep(2);
+        const dataURL = cnv.toDataURL('image/jpeg', 0.9);
+        document.getElementById(previewId).src = dataURL;
+        document.getElementById(previewId).classList.remove('hidden');
+        document.getElementById(videoId).classList.add('hidden');
 
-            } catch (err) {
-                showError('Could not connect to verification service.');
-            } finally {
-                document.getElementById('verify-text').innerText = 'Verify & Continue';
-                document.getElementById('verify-icon').className = 'fa-solid fa-arrow-right';
-                document.getElementById('verify-btn').disabled = false;
-            }
-        }
+        return new Promise(resolve => cnv.toBlob(blob => resolve(new File([blob],'capture.jpg',{type:'image/jpeg'})), 'image/jpeg', 0.9));
+    }
 
-        // ── STEP 2: Validate bio-data and go to step 3 ──────────
-        function goToStep3(event) {
-            event?.preventDefault();
-            hideError();
-            const required = ['first_name', 'last_name', 'gender', 'phone', 'email', 'password', 'state_of_origin', 'lga'];
-            for (const field of required) {
-                if (!document.getElementById(field).value.trim()) {
-                    showError(`Please fill in all required fields.`);
-                    return;
-                }
-            }
-            setStep(3);
-        }
+    // Default: full-frame capture (used for passport)
+    cnv.width = vid.videoWidth; cnv.height = vid.videoHeight;
+    if (mirror) { ctx.translate(cnv.width,0); ctx.scale(-1,1); }
+    ctx.drawImage(vid, 0, 0);
+    const dataURL = cnv.toDataURL('image/jpeg', 0.9);
+    document.getElementById(previewId).src = dataURL;
+    document.getElementById(previewId).classList.remove('hidden');
+    document.getElementById(videoId).classList.add('hidden');
+    return new Promise(resolve => cnv.toBlob(blob => resolve(new File([blob],'capture.jpg',{type:'image/jpeg'})), 'image/jpeg', 0.9));
+}
 
-        // ── STEP 3: Final submission ─────────────────────────────
-        async function submitRegistration(event) {
-            event?.preventDefault();
-            hideError();
+// ── FINGERPRINT controls ───────────────────────────────────────
+function setFpMode(mode) {
+    document.getElementById('fp-mode-snap').classList.toggle('active', mode==='snap');
+    document.getElementById('fp-mode-upload').classList.toggle('active', mode==='upload');
+    document.getElementById('fp-snap-mode').classList.toggle('hidden', mode!=='snap');
+    document.getElementById('fp-upload-mode').classList.toggle('hidden', mode!=='upload');
+    if (mode !== 'snap') { stopStream(fpStream); fpStream = null; }
+    if (mode === 'upload') fpFile = null;
+}
 
-            const fingerprintFile = document.getElementById('fingerprint').files[0];
-            const passportFile    = document.getElementById('passport').files[0];
+function setThumb(which) {
+    selectedThumb = which;
+    document.getElementById('thumb-left').className  = which==='left'  ? 'px-3 py-1.5 bg-green-600 text-white text-xs font-bold rounded-lg transition' : 'px-3 py-1.5 bg-black/60 text-white text-xs font-bold rounded-lg hover:bg-green-600 transition';
+    document.getElementById('thumb-right').className = which==='right' ? 'px-3 py-1.5 bg-green-600 text-white text-xs font-bold rounded-lg transition' : 'px-3 py-1.5 bg-black/60 text-white text-xs font-bold rounded-lg hover:bg-green-600 transition';
+    document.getElementById('fp-thumb-label').innerHTML = `<i class="fa-solid fa-circle-info mr-1"></i>Place your <strong>${which} thumb</strong> flat on the camera lens area and hold still`;
+}
 
-            if (!fingerprintFile) {
-                showError('Please upload your fingerprint image.');
-                return;
-            }
-            if (!passportFile) {
-                showError('Please upload your passport photograph.');
-                return;
-            }
+async function startFPCamera() {
+    fpStream = await startCam('fp-video', fpStream, 'fp-cam-placeholder', 'fp-guide', 'fp-start-btn', 'fp-capture-btn', ['fp-thumb-select']);
+}
 
-            // Set loading
-            document.getElementById('submit-text').innerText = 'Generating SSID...';
-            document.getElementById('submit-icon').className = 'fa-solid fa-spinner fa-spin';
-            document.getElementById('submit-btn').disabled = true;
+async function captureFP() {
+    fpFile = await snapFromCam('fp-video', 'fp-canvas', 'fp-snap-preview', 'fp-video', false);
+    document.getElementById('fp-guide').classList.add('hidden');
+    document.getElementById('fp-thumb-select').classList.add('hidden');
+    document.getElementById('fp-capture-btn').classList.add('hidden');
+    document.getElementById('fp-retake-btn').classList.remove('hidden');
+    stopStream(fpStream); fpStream = null;
+}
 
-            try {
-                const formData = new FormData();
-                formData.append('nin',             ninData.nin);
-                formData.append('dob',             ninData.dob);
-                formData.append('first_name',      document.getElementById('first_name').value);
-                formData.append('last_name',       document.getElementById('last_name').value);
-                formData.append('gender',          document.getElementById('gender').value);
-                formData.append('phone',           document.getElementById('phone').value);
-                formData.append('email',           document.getElementById('email').value);
-                formData.append('password',        document.getElementById('password').value);
-                formData.append('state_of_origin', document.getElementById('state_of_origin').value);
-                formData.append('lga',             document.getElementById('lga').value);
-                formData.append('employment_type', document.getElementById('employment_type').value);
-                formData.append('fingerprint',     fingerprintFile);
-                formData.append('passport',        passportFile);
+function retakeFP() {
+    fpFile = null;
+    document.getElementById('fp-snap-preview').classList.add('hidden');
+    document.getElementById('fp-retake-btn').classList.add('hidden');
+    document.getElementById('fp-start-btn').classList.remove('hidden');
+    document.getElementById('fp-cam-placeholder').classList.remove('hidden');
+}
 
-                const response = await fetch(`${API}/auth/register`, {
-                    method: 'POST',
-                    body: formData,
-                });
+function handleFPUpload(input) {
+    if (input.files[0]) {
+        fpFile = input.files[0];
+        const reader = new FileReader();
+        reader.onload = e => {
+            document.getElementById('fp-upload-preview').src = e.target.result;
+            document.getElementById('fp-upload-preview').classList.remove('hidden');
+            document.getElementById('fp-upload-placeholder').classList.add('hidden');
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
 
-                const data = await response.json();
+// ── PASSPORT PHOTO controls ────────────────────────────────────
+function setPPMode(mode) {
+    document.getElementById('pp-mode-snap').classList.toggle('active', mode==='snap');
+    document.getElementById('pp-mode-upload').classList.toggle('active', mode==='upload');
+    document.getElementById('pp-snap-mode').classList.toggle('hidden', mode!=='snap');
+    document.getElementById('pp-upload-mode').classList.toggle('hidden', mode!=='upload');
+    if (mode !== 'snap') { stopStream(ppStream); ppStream = null; }
+    if (mode === 'upload') ppFile = null;
+}
 
-                if (!response.ok) {
-                    showError(data.message || 'Registration failed. Please try again.');
-                    document.getElementById('submit-text').innerText = 'Generate My SSID';
-                    document.getElementById('submit-icon').className = 'fa-solid fa-fingerprint';
-                    document.getElementById('submit-btn').disabled = false;
-                    return;
-                }
+async function startPPCamera() {
+    ppStream = await startCam('pp-video', ppStream, 'pp-cam-placeholder', 'pp-face-guide', 'pp-start-btn', 'pp-capture-btn');
+}
 
-                // Show success screen
-                localStorage.setItem('register-success', JSON.stringify({ ssid: data.ssid, name: data.name }));
-                setStep(4);
-                document.getElementById('ssid-display').innerText = data.ssid;
-                document.getElementById('name-display').innerText = data.name;
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-                return; // Stop execution here
-            } catch (err) {
-                showError('Could not connect to server. Make sure the backend is running.');
-            } 
-        }
-    </script>
+async function capturePP() {
+    ppFile = await snapFromCam('pp-video', 'pp-canvas', 'pp-snap-preview', 'pp-video', true);
+    document.getElementById('pp-face-guide').classList.add('hidden');
+    document.getElementById('pp-capture-btn').classList.add('hidden');
+    document.getElementById('pp-retake-btn').classList.remove('hidden');
+    stopStream(ppStream); ppStream = null;
+}
+
+function retakePP() {
+    ppFile = null;
+    document.getElementById('pp-snap-preview').classList.add('hidden');
+    document.getElementById('pp-retake-btn').classList.add('hidden');
+    document.getElementById('pp-start-btn').classList.remove('hidden');
+    document.getElementById('pp-cam-placeholder').classList.remove('hidden');
+}
+
+function handlePPUpload(input) {
+    if (input.files[0]) {
+        ppFile = input.files[0];
+        const reader = new FileReader();
+        reader.onload = e => {
+            document.getElementById('pp-upload-preview').src = e.target.result;
+            document.getElementById('pp-upload-preview').classList.remove('hidden');
+            document.getElementById('pp-upload-placeholder').classList.add('hidden');
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+// ── STEP 1: Verify NIN ─────────────────────────────────────────
+async function verifyNIN() {
+    hideError();
+    const nin = document.getElementById('nin').value.trim();
+    const dob = document.getElementById('dob').value;
+    if (!nin || nin.length!==11 || !/^\d+$/.test(nin)) { showError('NIN must be exactly 11 digits.'); return; }
+    if (!dob) { showError('Please enter your date of birth.'); return; }
+    setVerifyLoading(true);
+    try {
+        const res  = await fetch(API+'/auth/verify-nin', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({nin,dob}) });
+        const data = await res.json();
+        if (!res.ok) { showError(data.message || 'NIN verification failed.'); return; }
+        ninData = { nin, dob };
+        setStep(2);
+        if (data.data) autofillFromNIMC(data.data);
+    } catch { showError('Could not connect to server. Make sure the backend is running.'); }
+    finally   { setVerifyLoading(false); }
+}
+
+// ── STEP 2: Validate + go to step 3 ───────────────────────────
+function goToStep3() {
+    hideError();
+    for (const id of ['first_name','last_name','gender','phone','email','password','state_of_origin']) {
+        if (!document.getElementById(id).value.trim()) { showError('Please fill in all required fields.'); return; }
+    }
+    if (!getLGA()) { showError('Please select or enter your LGA.'); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(document.getElementById('email').value.trim())) { showError('Please enter a valid email address.'); return; }
+    if (document.getElementById('password').value.length < 8) { showError('Password must be at least 8 characters.'); return; }
+    setStep(3);
+}
+
+// ── STEP 3: Submit ─────────────────────────────────────────────
+async function submitRegistration() {
+    hideError();
+    if (!fpFile) { showError('Please capture or upload your fingerprint.'); return; }
+    if (!ppFile) { showError('Please capture or upload your passport photograph.'); return; }
+    setSubmitLoading(true);
+    try {
+        const fd = new FormData();
+        fd.append('nin',             ninData.nin);
+        fd.append('dob',             ninData.dob);
+        fd.append('first_name',      document.getElementById('first_name').value.trim());
+        fd.append('last_name',       document.getElementById('last_name').value.trim());
+        fd.append('gender',          document.getElementById('gender').value);
+        fd.append('phone',           document.getElementById('phone').value.trim());
+        fd.append('email',           document.getElementById('email').value.trim());
+        fd.append('password',        document.getElementById('password').value);
+        fd.append('state_of_origin', document.getElementById('state_of_origin').value);
+        fd.append('lga',             getLGA());
+        fd.append('employment_type', document.getElementById('employment_type').value);
+        fd.append('fingerprint',     fpFile);
+        fd.append('passport',        ppFile);
+        const res  = await fetch(API+'/auth/register', { method:'POST', body:fd });
+        const data = await res.json();
+        if (!res.ok) { showError(data.message || 'Registration failed.'); return; }
+        document.getElementById('ssid-display').innerText = data.ssid;
+        document.getElementById('name-display').innerText = data.name.toUpperCase();
+        setStep(4);
+    } catch { showError('Could not connect to server. Make sure the backend is running.'); }
+    finally   { setSubmitLoading(false); }
+}
+
+// ── Init ───────────────────────────────────────────────────────
+loadStates();
+</script>
 </body>
 </html>

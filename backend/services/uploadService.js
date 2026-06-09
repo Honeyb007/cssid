@@ -2,10 +2,14 @@ const multer  = require('multer');
 const sharp   = require('sharp');
 const path    = require('path');
 const fs      = require('fs');
+const os      = require('os');
 
-// Ensure upload directories exist
-const FINGERPRINT_DIR = path.join(__dirname, '../uploads/fingerprints');
-const PASSPORT_DIR    = path.join(__dirname, '../uploads/passports');
+// Use a temp directory for development uploads to avoid triggering
+// Live Server / editor file-watch auto-reloads when the backend writes
+// files into the workspace. This keeps the frontend state stable.
+const UPLOAD_ROOT = process.env.UPLOAD_DIR || path.join(os.tmpdir(), 'cnssid_uploads');
+const FINGERPRINT_DIR = path.join(UPLOAD_ROOT, 'fingerprints');
+const PASSPORT_DIR    = path.join(UPLOAD_ROOT, 'passports');
 [FINGERPRINT_DIR, PASSPORT_DIR].forEach((dir) => {
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 });
@@ -41,7 +45,7 @@ async function saveFingerprint(buffer, ssid) {
     .jpeg({ quality: 85 })
     .toFile(filepath);
 
-  return `/uploads/fingerprints/${filename}`;
+  return filepath;
 }
 
 /**
@@ -57,7 +61,7 @@ async function savePassport(buffer, ssid) {
     .jpeg({ quality: 85 })
     .toFile(filepath);
 
-  return `/uploads/passports/${filename}`;
+  return filepath;
 }
 
 module.exports = { upload, saveFingerprint, savePassport };

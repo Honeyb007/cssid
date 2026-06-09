@@ -1,0 +1,29 @@
+Quick start
+
+From the project root:
+cd backend
+npm install
+cp .env.example .env and edit .env values as needed
+node server.js
+API base: http://localhost:5000/api
+Notes
+
+Upload location: by default the backend writes runtime upload files to the OS temp folder (safe for local development). Do NOT set UPLOAD_DIR to a path inside the project workspace if you want to avoid Live Server/editor auto-reloads.
+To override uploads location set UPLOAD_DIR to an absolute path outside the repo, e.g. C:\temp\cnssid_uploads.
+Sharp on Windows
+
+If npm install fails on sharp, try:
+npm rebuild sharp --update-binary
+If problems persist, install Visual Studio Build Tools or use WSL/Docker; then reinstall.
+Sharp on Windows
+
+If npm install fails on sharp, try:
+npm rebuild sharp --update-binary
+If problems persist, install Visual Studio Build Tools or use WSL/Docker; then reinstall.
+Troubleshooting
+
+Ensure your .env values are correct (DB connection, JWT secret).
+
+If frontend shows "Could not connect to server", confirm backend running and port matches .env.
+Optional: override upload dir (absolute path outside project)
+UPLOAD_DIR=C:\temp\cnssid_uploads

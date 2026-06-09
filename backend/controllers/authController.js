@@ -137,6 +137,7 @@ async function login(req, res) {
       return res.status(401).json({ message: 'Invalid email or password.' });
     }
 
+
     // Update last login
     await pool.query('UPDATE users SET last_login = NOW() WHERE id = ?', [user.id]);
 
@@ -167,5 +168,65 @@ async function login(req, res) {
     return res.status(500).json({ message: 'Server error during login.' });
   }
 }
+// ----------------------------------------------------------------
+// POST /api/auth/verify-nin
+// Step 1 of enrollment — verify NIN against NINAuth gateway.
+// Returns partial citizen data (name) if found in mock database.
+// This endpoint exists separately from /register so the frontend
+// can autofill fields BEFORE the citizen completes the full form.
+// In production: this would be a consent-gated NINAuth API call.
+// ----------------------------------------------------------------
+async function verifyNINStep(req, res) {
+  const { nin, dob } = req.body;
 
-module.exports = { register, login };
+  if (!nin || !dob) {
+    return res.status(400).json({ message: 'NIN and date of birth are required.' });
+  }
+
+  if (!/^\d{11}$/.test(nin)) {
+    return res.status(400).json({ message: 'NIN must be exactly 11 digits.' });
+  }
+
+  try {
+    // Check if NIN is already registered in the system
+    const [existing] = await pool.query(
+      'SELECT id FROM citizens WHERE nin = ?', [nin]
+    );
+    if (existing.length > 0) {
+      return res.status(409).json({
+        message: 'This NIN is already registered in the CNSSID system.',
+      });
+    }
+
+    // Call NINAuth gateway
+    const ninResult = await verifyNIN(nin, dob);
+
+    if (!ninResult.verified) {
+      return res.status(400).json({
+        message: ninResult.message,
+        errorCode: ninResult.errorCode || null,
+      });
+    }
+
+    // Return whatever the gateway gave us
+    // If NIN is in mock DB → real name returned
+    // If NIN is unknown → name is null (citizen fills manually)
+    return res.status(200).json({
+      verified: true,
+      message: ninResult.message,
+      data: {
+        firstName: ninResult.data?.firstName || null,
+        lastName:  ninResult.data?.lastName  || null,
+        gender:    ninResult.data?.gender    || null,
+        phone:     ninResult.data?.phone     || null,
+        // We never return the full DOB back — security best practice
+      },
+    });
+
+  } catch (err) {
+    console.error('verifyNINStep error:', err);
+    return res.status(500).json({ message: 'Server error during NIN verification.' });
+  }
+}
+
+module.exports = { register, login, verifyNINStep };
